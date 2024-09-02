@@ -13,13 +13,13 @@ numpy
 jupyter
 
 # Carga de datos
-google-cloud-bigquery
-mysql-connector-python
-psycopg2
+#google-cloud-bigquery
+#mysql-connector-python
+#psycopg2
 pyodbc
 
 # Formatos de archivo
-json
+#json
 lxml
 
 # Kafka para streaming de datos
