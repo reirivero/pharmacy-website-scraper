@@ -21,10 +21,12 @@ RUN wget https://github.com/JanDeDobbeleer/oh-my-posh/releases/latest/download/p
 # Configurar Oh My Posh
 RUN echo 'eval "$(oh-my-posh --init --shell bash --config ~/.poshthemes/kushal.omp.json)"' >> ~/.bashrc
 
-ADD ../requirements.txt .
-RUN pip install --no-cache-dir apache-airflow==${AIRFLOW_VERSION} -r /requirements.txt
-
 USER airflow
+
+ADD requirements.txt .
+RUN pip install --no-cache-dir apache-airflow==${AIRFLOW_VERSION} -r requirements.txt
+
+
 # Copiar los DAGs y otros archivos necesarios
 # COPY dags/ /opt/airflow/dags/
 # COPY src/ /opt/airflow/src/

@@ -1,7 +1,7 @@
 {
     "name": "Apache Airflow",
     "dockerComposeFile": "../docker/docker-compose.yaml",
-    "service": "airflow",
+    "service": "airflow-webserver",
     "customizations": {
         "vscode": {
             "extensions": [
@@ -13,17 +13,14 @@
                 "ms-python.vscode-pylance",
                 "mtxr.sqltools",
                 "mtxr.sqltools-driver-pg",
-                "rogalmic.bash-debug",
-                "ms-azuretools.vscode-docker",
-                "dbaeumer.vscode-eslint",
-                "ecmel.vscode-html-css",
                 "timonwong.shellcheck",
                 "redhat.vscode-yaml",
                 "rogalmic.bash-debug"
             ],
             "settings": {
                 "terminal.integrated.defaultProfile.linux": "bash",
-                "terminal.integrated.shell.linux": "/bin/bash"
+                "terminal.integrated.shell.linux": "/bin/bash",
+				"python.pythonPath": "/usr/local/bin/python"
             }
         }
     },
