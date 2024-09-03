@@ -1,7 +1,7 @@
 FROM apache/airflow:2.10.0-python3.12
 
 # Configurar el entorno no interactivo para evitar prompts durante la instalación
-ENV DEBIAN_FRONTEND=noninteractive
+# ENV DEBIAN_FRONTEND=noninteractive
 ENV AIRFLOW__CORE__LOAD_EXAMPLES=True
 
 USER root
@@ -29,7 +29,7 @@ RUN pip install --no-cache-dir apache-airflow==${AIRFLOW_VERSION} -r requirement
 
 # Copiar los DAGs y otros archivos necesarios
 # COPY dags/ /opt/airflow/dags/
-# COPY src/ /opt/airflow/src/
-# COPY tests/ /opt/airflow/tests/
+COPY src/ /opt/airflow/src/
+COPY tests/ /opt/airflow/tests/
 # COPY logs/ /opt/airflow/logs/
-# COPY .env /opt/airflow/.env
+COPY .env /opt/airflow/.env
