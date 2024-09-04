@@ -1,18 +1,14 @@
 import logging
 import time
 import json
+import pandas as pd
 
-import requests
-from bs4 import BeautifulSoup
-import re
+# Leer el archivo .csv
+input_data = pd.read_csv('../../data/input_urls.csv')
 
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-from webdriver_manager.chrome import ChromeDriverManager
-
-
+print(input_data.head(10))
+for row in input_data:
+    print(row, type(row),sep='\n')
 
 if __name__ == '__main__':
     pass
