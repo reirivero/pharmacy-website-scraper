@@ -19,7 +19,7 @@ from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 # Webdriver
-from webdriver_manager.chrome import ChromeDriverManager
+# from webdriver_manager.chrome import ChromeDriverManager
 
 # driver for Selenium
 options = Options()
@@ -48,10 +48,18 @@ def farmex(url,data) -> dict:
     stock_text = product_price_container.find('pre').text.strip()
     is_available = int(stock_text.split(': ')[1]) > 0
     
+    # Agregado el 04-09-2024 en la noche
+    # Extract JSON-LD script
+    json_ld_script = soup.find('script', type='application/ld+json').string
+    json_data = json.loads(json_ld_script)
+
+    # Extract SKU and lab_name
+    sku = json_data.get('sku', None)
+    lab_name = json_data.get('brand', {}).get('name', None)
+
     active_principle = None
-    sku = None
     bioequivalent = None
-    lab_name = None
+
 
     data.update({
         "web_name": name,
@@ -219,7 +227,7 @@ def elquimico(url,data) -> dict:
     data.update({
         "web_name": name,
         "is_available": is_available,
-        "price": '$'+price,
+        "price": price,
         "bioequivalent": bioequivalent,
         "active_principle": active_principle,
         "sku": sku,
@@ -242,7 +250,7 @@ def ahumada(url,data) -> dict:
     except WebDriverException as e:
         raise Exception(f"Error al cargar la página: {e}")
     
-    wait = WebDriverWait(driver, 20)
+    # wait = WebDriverWait(driver, 20)
 
     try:
         # consent_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'button.affirm')))
@@ -307,7 +315,8 @@ def ecofarmacias(url,data) -> dict:
     active_principle_elem = soup.find('li', string=lambda x: x and 'Principios Activos:' in x)
     if active_principle_elem:
         active_principle = active_principle_elem.text.split(': ')[1]
-    else: active_principle = None
+    else: 
+        active_principle = None
 
     # Extraer el nombre del producto y laboratorios
     product_title = soup.find('h1', class_='product_title entry-title').text
@@ -373,13 +382,15 @@ def drsimi(url,data) -> dict:
         bioequivalent_text = bioequivalent_elem.text
         # Verificar si el texto contiene "es bioequivalente"
         bioequivalent = "es bioequivalente" in bioequivalent_text
-    else: bioequivalent = False
+    else: 
+        bioequivalent = False
 
     # Extraer el principio activo
     active_principle_elem = soup.find('td', class_='vtex-store-components-3-x-specificationItemSpecifications--principioActivo')
     if active_principle_elem:
         active_principle = active_principle_elem.text.strip()
-    else: active_principle = 'Not found in the webpage'
+    else: 
+        active_principle = None
 
     lab_name = None
     is_available = None
@@ -473,7 +484,40 @@ def mercadofarma(url,data) -> dict:
 
     return data
 
+def meki(url,data):
+    response = requests.get(url)
+    if response.status_code != 200:
+        raise requests.exceptions.HTTPError(f"Error en la solicitud: {response.status_code}")
+    
+    soup = BeautifulSoup(response.content, 'html.parser')
+    
+    # Encontrar el script con el JSON
+    script_tag = soup.find('script', id='__NEXT_DATA__', type='application/json')
+    json_data = json.loads(script_tag.string)
+    
+    # Extraer los datos necesarios
+    product_data = json_data['props']['pageProps']['initialProduct']
+    
+    bioequivalent = product_data['isBioequivalent']
+    active_principle = product_data['activePrinciple']
+    lab_name = product_data['laboratory']
+    name = product_data['name']
+    price = product_data['price']
+    is_available = product_data['availability']['stock']
+    sku = None
+    
+    data.update({
+        "web_name": name,
+        "is_available": is_available,
+        "price": price,
+        "bioequivalent": bioequivalent,
+        "active_principle": active_principle,
+        "sku": sku,
+        "lab_name": lab_name,
+        "url" : url
+    })
 
+    return data
 
 if __name__ == '__main__':
     pass

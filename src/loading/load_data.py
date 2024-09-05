@@ -1,4 +1,4 @@
-import logging
+# import logging
 import os
 from src.extraction.extract_data import med_data
 import pandas as pd
