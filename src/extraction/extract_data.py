@@ -1,13 +1,16 @@
-import logging
-import time
-import json
-import pandas as pd
+# import logging
+import sys
 import os
+
+# Agregar el directorio src al sys.path
+sys.path.append(os.path.abspath(os.path.join('..', '..', 'src')))
+
 from datetime import datetime
-from src.utils import pharmacy as p
+from utils import pharmacy as p
+import pandas as pd
 
 # Leer el archivo .csv
-file_path = os.path.abspath('data/input_urls.csv')
+file_path = os.path.abspath('../../data/input_urls.csv')
 input_data = pd.read_csv(file_path)
 
 med_data = {}
@@ -59,7 +62,7 @@ med_data = {
 '''
 
 # Principle function to call a specific function depending on the pharmacy
-def extract_data(url,product_name,pharmacy) -> dict:
+def extract_data(url,product_name,pharmacy):
     global data
     data = {}
 
@@ -88,6 +91,8 @@ def extract_data(url,product_name,pharmacy) -> dict:
         data = p.ecofarmacias(url,data)
     elif 'mercadofarma.cl' in url:
         data = p.mercadofarma(url,data)
+    elif 'farmaciameki.cl' in url:
+        data = p.meki(url,data)
     else:
         pass
 
