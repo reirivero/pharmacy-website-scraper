@@ -34,7 +34,7 @@ def farmex(url,data) -> dict:
     response = requests.get(url)
     if response.status_code != 200:
         raise  requests.exceptions.HTTPError(f"Error en la solicitud: {response.status_code}")
-    
+
     soup = BeautifulSoup(response.content, 'html.parser')
 
     # Extract product name from web
@@ -57,16 +57,12 @@ def farmex(url,data) -> dict:
     sku = json_data.get('sku', None)
     lab_name = json_data.get('brand', {}).get('name', None)
 
-    active_principle = None
-    bioequivalent = None
-
-
     data.update({
         "web_name": name,
         "is_available": is_available,
         "price": price,
-        "bioequivalent": bioequivalent,
-        "active_principle": active_principle,
+        "bioequivalent": None,
+        "active_principle": None,
         "sku": sku,
         "lab_name": lab_name,
         "url" : url
@@ -79,7 +75,7 @@ def salcobrand(url,data) -> dict:
     response = requests.get(url)
     if response.status_code != 200:
         raise  requests.exceptions.HTTPError(f"Error en la solicitud: {response.status_code}")
-    
+
     # Parsear el contenido HTML
     soup = BeautifulSoup(response.content, 'html.parser')
 
@@ -161,15 +157,13 @@ def buhochile(url,data) -> dict:
     meta_availability = soup.find('meta', {'property': 'product:availability'})
     is_available = meta_availability['content'] == 'in stock'
 
-    sku = None
-
     data.update({
         "web_name": name,
         "is_available": is_available,
         "price": price,
         "bioequivalent": bioequivalent,
         "active_principle": active_principle,
-        "sku": sku,
+        "sku": None,
         "lab_name": lab_name,
         "url" : url
     })
@@ -189,15 +183,15 @@ def elquimico(url,data) -> dict:
         driver.get(url)
     except WebDriverException as e:
         raise Exception(f"Error al cargar la página: {e}")
-    
+
     response = requests.get(url)
     if response.status_code != 200:
         raise  requests.exceptions.HTTPError(f"Error en la solicitud: {response.status_code}")
-    
+
     soup = BeautifulSoup(response.content, 'html.parser')    
     wait = WebDriverWait(driver, 10)
     price_element = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'span.money-subtotal')))
-    
+
     # Avaiibity - stock 
 
     stock_elem = soup.find(lambda tag: tag.name == 'span' and tag.get('class') == ['productView-info-value'] and ('En stock' in tag.text or 'Agotado' in tag.text))
@@ -205,7 +199,7 @@ def elquimico(url,data) -> dict:
     elem_product = soup.find('h1',{'class':'productView-title'})
     name = elem_product.get_text().strip() if elem_product \
         else "Name product not found"  
-      
+ 
     price = price_element.text
     is_available = True if stock_elem.text.strip() == 'En stock' else False # True if stock_element.text.strip() == 'En stock' else False
 
@@ -222,13 +216,11 @@ def elquimico(url,data) -> dict:
     
     driver.quit()
 
-    bioequivalent = None
-
     data.update({
         "web_name": name,
         "is_available": is_available,
         "price": price,
-        "bioequivalent": bioequivalent,
+        "bioequivalent": None,
         "active_principle": active_principle,
         "sku": sku,
         "lab_name": lab_name,
@@ -249,8 +241,6 @@ def ahumada(url,data) -> dict:
         driver.get(url)
     except WebDriverException as e:
         raise Exception(f"Error al cargar la página: {e}")
-    
-    # wait = WebDriverWait(driver, 20)
 
     try:
         # consent_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'button.affirm')))
@@ -277,17 +267,13 @@ def ahumada(url,data) -> dict:
         driver.quit()
         exit()
 
-    bioequivalent = None
-    is_available = None
-    sku = None
-
     data.update({
         "web_name": name,
-        "is_available": is_available,
+        "is_available": None,
         "price": price,
-        "bioequivalent": bioequivalent,
+        "bioequivalent": None,
         "active_principle": active_principle,
-        "sku": sku,
+        "sku": None,
         "lab_name": lab_name,
         "url" : url
     })
@@ -298,14 +284,14 @@ def ecofarmacias(url,data) -> dict:
     response = requests.get(url)
     if response.status_code != 200:
         raise  requests.exceptions.HTTPError(f"Error en la solicitud: {response.status_code}")
-    
+
     soup = BeautifulSoup(response.content, 'html.parser')
 
     # Extraer el precio
     price = soup.find('bdi').text
 
     # Extraer el valor de stock
-    
+
     is_available = False if soup.find('p', class_=re.compile(r'stock')) else True
 
     # Extraer el SKU
@@ -321,19 +307,17 @@ def ecofarmacias(url,data) -> dict:
     # Extraer el nombre del producto y laboratorios
     product_title = soup.find('h1', class_='product_title entry-title').text
     name = product_title.split('(')[0].strip()
-    # lab_name = [lab.strip(')') for lab in product_title.split('(')[1:]]
-    lab_name = None
 
-    bioequivalent = None
-    
+    # lab_name = [lab.strip(')') for lab in product_title.split('(')[1:]]
+
     data.update({
         "web_name": name,
         "is_available": is_available,
         "price": price,
-        "bioequivalent": bioequivalent,
+        "bioequivalent": None,
         "active_principle": active_principle,
         "sku": sku,
-        "lab_name": lab_name,
+        "lab_name": None,
         "url" : url
     })
 
@@ -343,7 +327,7 @@ def drsimi(url,data) -> dict:
     response = requests.get(url)
     if response.status_code != 200:
         raise  requests.exceptions.HTTPError(f"Error en la solicitud: {response.status_code}")
-    
+
     soup = BeautifulSoup(response.content, 'html.parser')
 
     # Encontrar el contenedor del precio
@@ -392,17 +376,14 @@ def drsimi(url,data) -> dict:
     else: 
         active_principle = None
 
-    lab_name = None
-    is_available = None
-    
     data.update({
         "web_name": name,
-        "is_available": is_available,
+        "is_available": None,
         "price": price,
         "bioequivalent": bioequivalent,
         "active_principle": active_principle,
         "sku": sku,
-        "lab_name": lab_name,
+        "lab_name": None,
         "url" : url
     })
 
@@ -412,9 +393,9 @@ def novasalud(url,data) -> dict:
     response = requests.get(url)
     if response.status_code != 200:
         raise  requests.exceptions.HTTPError(f"Error en la solicitud: {response.status_code}")
-    
+
     soup = BeautifulSoup(response.content, 'html.parser')
-    
+
     name = soup.find('span', class_='base', itemprop='name').text.strip()
 
     # Extraer el SKU
@@ -433,13 +414,11 @@ def novasalud(url,data) -> dict:
     # Extraer el Laboratorio
     lab_name = soup.find('th', string='Laboratorio').find_next_sibling('td').text.strip()
  
-    bioequivalent = None
-
     data.update({
         "web_name": name,
         "is_available": is_available,
         "price": price,
-        "bioequivalent": bioequivalent,
+        "bioequivalent": None,
         "active_principle": active_principle,
         "sku": sku,
         "lab_name": lab_name,
@@ -452,9 +431,9 @@ def mercadofarma(url,data) -> dict:
     response = requests.get(url)
     if response.status_code != 200:
         raise  requests.exceptions.HTTPError(f"Error en la solicitud: {response.status_code}")
-    
+
     soup = BeautifulSoup(response.content, 'html.parser')
-    
+
     name = soup.find('h1', class_='product-meta__title').text.strip()
 
     # Extraer el Laboratorio (Vendor)
@@ -467,17 +446,13 @@ def mercadofarma(url,data) -> dict:
     stock_text = soup.find('span', class_='product-form__inventory').text.strip()
     is_available = 'quedan' in stock_text and '0' not in stock_text
     
-    active_principle = None
-    sku = None
-    bioequivalent = None
-    
     data.update({
         "web_name": name,
         "is_available": is_available,
         "price": price,
-        "bioequivalent": bioequivalent,
-        "active_principle": active_principle,
-        "sku": sku,
+        "bioequivalent": None,
+        "active_principle": None,
+        "sku": None,
         "lab_name": lab_name,
         "url" : url
     })
@@ -503,8 +478,11 @@ def meki(url,data):
     lab_name = product_data['laboratory']
     name = product_data['name']
     price = product_data['price']
-    is_available = product_data['availability']['stock']
-    sku = None
+    is_available = False
+    for p_tag in soup.find_all('p', class_='MuiTypography-root MuiTypography-body1 mui-style-m99pms'):
+        if "Recibe" in p_tag.text and "mañana" in p_tag.text:
+            is_available = True
+            break
     
     data.update({
         "web_name": name,
@@ -512,12 +490,57 @@ def meki(url,data):
         "price": price,
         "bioequivalent": bioequivalent,
         "active_principle": active_principle,
-        "sku": sku,
+        "sku": None,
         "lab_name": lab_name,
         "url" : url
     })
 
     return data
+
+def cruzverde(url,data):
+    driver.get(url)
+
+    try:
+        app_root = WebDriverWait(driver, 20).until(
+            EC.presence_of_element_located((By.TAG_NAME, "app-root"))
+        )
+
+        # Obtener el contenido de <app-root>
+        app_root_content = app_root.get_attribute('innerHTML')
+
+        # Analizar el contenido con BeautifulSoup
+        soup = BeautifulSoup(app_root_content, 'html.parser')
+
+        # Extraer el precio
+        price_element = soup.find('span', class_='font-bold text-prices text-16')
+        price = price_element.text if price_element else 'N/A'
+
+        # Extraer el nombre y el laboratorio
+        laboratory_element = soup.find('span', class_='text-12 uppercase italic cursor-pointer hover:text-accent')
+        lab_name = laboratory_element.text if laboratory_element else 'N/A'
+
+        name_element = soup.find('h1', class_='text-18 leading-22 font-bold w-3/4 mb-5')
+        name = name_element.text if name_element else 'N/A'
+
+    except Exception as e:
+        print(f"Error: {e}")
+
+    finally:
+        # Cerrar el navegador
+        driver.quit()
+
+    data.update({
+        "web_name": name,
+        "is_available": None,
+        "price": price,
+        "bioequivalent": None,
+        "active_principle": None,
+        "sku": None,
+        "lab_name": lab_name,
+        "url" : url
+    })
+    return data
+
 
 if __name__ == '__main__':
     pass
