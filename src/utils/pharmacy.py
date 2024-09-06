@@ -25,6 +25,7 @@ from selenium.common.exceptions import TimeoutException
 options = Options()
 # options.headless = True  # Ejecuta el navegador en modo headless
 options.add_argument("--headless")  # Ejecutar en modo headless
+options.add_argument("--incognito")
 options.binary_location = "/usr/bin/google-chrome"  # Ruta al binario de Google Chrome
 service = Service('/usr/local/bin/chromedriver')
 driver = webdriver.Chrome(service=service, options=options)
@@ -261,6 +262,10 @@ def ahumada(url,data) -> dict:
 
         # Extraer el Precio
         price = soup.find('span', class_='value d-flex align-items-center').text.strip()
+            # Verificar la disponibilidad del producto
+        add_to_cart_button = driver.find_element(By.CSS_SELECTOR, 'button.add-to-cart')
+        product_availability = add_to_cart_button.is_displayed() and add_to_cart_button.is_enabled()
+        is_available = True if product_availability else False
 
     except TimeoutException:
         print("El botón de consentimiento de cookies no se encontró dentro del tiempo especificado.")
@@ -269,7 +274,7 @@ def ahumada(url,data) -> dict:
 
     data.update({
         "web_name": name,
-        "is_available": None,
+        "is_available": is_available,
         "price": price,
         "bioequivalent": None,
         "active_principle": active_principle,
@@ -291,8 +296,8 @@ def ecofarmacias(url,data) -> dict:
     price = soup.find('bdi').text
 
     # Extraer el valor de stock
-
-    is_available = False if soup.find('p', class_=re.compile(r'stock')) else True
+    stock_elemt = soup.find('p', class_=re.compile(r'stock'))
+    is_available = False if not stock_elemt or stock_elemt.text.strip() != 'Sin existencias' else True
 
     # Extraer el SKU
     sku = soup.find('span', class_='sku').text
@@ -376,9 +381,14 @@ def drsimi(url,data) -> dict:
     else: 
         active_principle = None
 
+    # Verificar la disponibilidad del producto
+    add_to_cart_button = soup.find('button', class_='vtex-button bw1 ba fw5 v-mid relative pa0 lh-solid br2 min-h-regular t-action bg-action-primary b--action-primary c-on-action-primary hover-bg-action-primary hover-b--action-primary hover-c-on-action-primary pointer w-100')
+    product_availability = bool(add_to_cart_button)
+    is_available = True if product_availability else False
+
     data.update({
         "web_name": name,
-        "is_available": None,
+        "is_available": is_available,
         "price": price,
         "bioequivalent": bioequivalent,
         "active_principle": active_principle,
@@ -498,9 +508,34 @@ def meki(url,data):
     return data
 
 def cruzverde(url,data):
-    driver.get(url)
+    options = Options()
+    options.add_argument("--headless")  # Ejecutar en modo headless
+    options.add_argument("--incognito")
+    options.binary_location = "/usr/bin/google-chrome"  # Ruta al binario de Google Chrome
+    service = Service('/usr/local/bin/chromedriver')
+    driver = webdriver.Chrome(service=service, options=options)
 
     try:
+        driver.get(url)
+
+        # Esperar a que el app-root esté presente
+        app_root = WebDriverWait(driver, 20).until(
+            EC.presence_of_element_located((By.TAG_NAME, "app-root"))
+        )
+
+        # Obtener el contenido de <app-root>
+        app_root_content = app_root.get_attribute('innerHTML')
+        soup = BeautifulSoup(app_root_content, 'html.parser')
+
+        # Encontrar y hacer clic en el botón "Aceptar"
+        accept_button = soup.find('button', text='Aceptar')
+        if accept_button:
+            driver.execute_script("arguments[0].click();", driver.find_element(By.XPATH, "//button[contains(text(), 'Aceptar')]"))
+
+        # Recargar la página
+        driver.get(url)
+
+        # Esperar a que el nuevo app-root esté presente
         app_root = WebDriverWait(driver, 20).until(
             EC.presence_of_element_located((By.TAG_NAME, "app-root"))
         )
@@ -513,14 +548,16 @@ def cruzverde(url,data):
 
         # Extraer el precio
         price_element = soup.find('span', class_='font-bold text-prices text-16')
-        price = price_element.text if price_element else 'N/A'
+        price = price_element.text if price_element else None
 
         # Extraer el nombre y el laboratorio
         laboratory_element = soup.find('span', class_='text-12 uppercase italic cursor-pointer hover:text-accent')
-        lab_name = laboratory_element.text if laboratory_element else 'N/A'
+        lab_name = laboratory_element.text if laboratory_element else None
 
         name_element = soup.find('h1', class_='text-18 leading-22 font-bold w-3/4 mb-5')
-        name = name_element.text if name_element else 'N/A'
+        name = name_element.text if name_element else None
+
+
 
     except Exception as e:
         print(f"Error: {e}")
@@ -537,8 +574,9 @@ def cruzverde(url,data):
         "active_principle": None,
         "sku": None,
         "lab_name": lab_name,
-        "url" : url
+        "url": url
     })
+
     return data
 
 
