@@ -5,7 +5,7 @@ import os
 
 def main():
     input_file = os.path.abspath('./data/input_urls.csv')
-    output_file = os.path.abspath('./data/output_data.csv')
+    output_file = os.path.abspath('./data/output_data_cv.csv')
     
     # Extracción de datos
     med_data = extract_data(input_file)
