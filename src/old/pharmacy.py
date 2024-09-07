@@ -1,9 +1,13 @@
 # Importar las posibles librerías
 # Beautiful Soup
 from bs4 import BeautifulSoup
+
 import json
 import requests
+
 import re
+#from datetime import datetime
+#import time
 
 # Selenium  libraries
 from selenium import webdriver
@@ -14,8 +18,17 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
+# Webdriver
+# from webdriver_manager.chrome import ChromeDriverManager
 
-
+# driver for Selenium
+options = Options()
+# options.headless = True  # Ejecuta el navegador en modo headless
+options.add_argument("--headless")  # Ejecutar en modo headless
+options.add_argument("--incognito")
+options.binary_location = "/usr/bin/google-chrome"  # Ruta al binario de Google Chrome
+service = Service('/usr/local/bin/chromedriver')
+driver = webdriver.Chrome(service=service, options=options)
 
 # Grupo de funciones según la farmacia a ser escaneada
 def farmex(url,data) -> dict:
@@ -26,7 +39,7 @@ def farmex(url,data) -> dict:
     soup = BeautifulSoup(response.content, 'html.parser')
 
     # Extract product name from web
-    name = soup.find('h1', class_='page-heading').text.strip('"')
+    name = soup.find('h1', class_='page-heading').text.strip()
 
     # Extract price
     product_price_container = soup.find('div', class_='product-price')
@@ -46,13 +59,13 @@ def farmex(url,data) -> dict:
     lab_name = json_data.get('brand', {}).get('name', None)
 
     data.update({
-        "price": price,
-        "lab_name": lab_name,
-        "bioequivalent": None,
+        "web_name": name,
         "is_available": is_available,
+        "price": price,
+        "bioequivalent": None,
         "active_principle": None,
         "sku": sku,
-        "web_name": name,
+        "lab_name": lab_name,
         "url" : url
     })
 
@@ -91,27 +104,21 @@ def salcobrand(url,data) -> dict:
     active_principle = active_principle_match.group(1).strip().split('/')[0].strip() if active_principle_match else None
 
     # Extraer el SKU de la URL
-    sku_match = soup.find('span', class_='sku')
-    sku = sku_match.text.split('\n')[2].strip() if sku_match else None
+    sku_match = re.search(r'default_sku=(\d+)', url)
+    sku = sku_match.group(1) if sku_match else None
 
     # Extraer el nombre del laboratorio del bloque de código HTML proporcionado
-    lab_name_tag = soup.find('div', class_='description-area').find('h4', string='Laboratorio')
-    if lab_name_tag:
-        if lab_name_tag.find_next_sibling('p'):
-            lab_name = lab_name_tag.find_next_sibling('p').text.strip()
-        else:
-            lab_name = lab_name_tag.find_next_sibling('div').text.strip()
-    else:
-        lab_name = None
+    lab_name_tag = soup.find('div', class_='description-area').find('h4', sring='Laboratorio')
+    lab_name = lab_name_tag.find_next_sibling('p').text.strip() if lab_name_tag else None
 
     data.update({
-        "price": '$'+price,
-        "lab_name": lab_name,
-        "bioequivalent": bioequivalent,
+        "web_name": name,
         "is_available": is_available,
+        "price": '$'+price,
+        "bioequivalent": bioequivalent,
         "active_principle": active_principle,
         "sku": sku,
-        "web_name": name,
+        "lab_name": lab_name,
         "url" : url
     })
 
@@ -119,11 +126,9 @@ def salcobrand(url,data) -> dict:
 
 # El Búho pharmacy
 def buhochile(url,data) -> dict:    
-    # driver for Selenium
     options = Options()
     # options.headless = True  # Ejecuta el navegador en modo headless
     options.add_argument("--headless")  # Ejecutar en modo headless
-    options.add_argument("--incognito")
     options.binary_location = "/usr/bin/google-chrome"  # Ruta al binario de Google Chrome
     service = Service('/usr/local/bin/chromedriver')
     driver = webdriver.Chrome(service=service, options=options)
@@ -154,13 +159,13 @@ def buhochile(url,data) -> dict:
     is_available = meta_availability['content'] == 'in stock'
 
     data.update({
-        "price": price,
-        "lab_name": lab_name,
-        "bioequivalent": bioequivalent,
+        "web_name": name,
         "is_available": is_available,
+        "price": price,
+        "bioequivalent": bioequivalent,
         "active_principle": active_principle,
         "sku": None,
-        "web_name": name,
+        "lab_name": lab_name,
         "url" : url
     })
 
@@ -172,7 +177,6 @@ def elquimico(url,data) -> dict:
     options = Options()
     # options.headless = True  # Ejecuta el navegador en modo headless
     options.add_argument("--headless")  # Ejecutar en modo headless
-    options.add_argument("--incognito")
     options.binary_location = "/usr/bin/google-chrome"  # Ruta al binario de Google Chrome
     service = Service('/usr/local/bin/chromedriver')
     driver = webdriver.Chrome(service=service, options=options)
@@ -214,13 +218,13 @@ def elquimico(url,data) -> dict:
     driver.quit()
 
     data.update({
-        "price": price,
-        "lab_name": lab_name,
-        "bioequivalent": None,
+        "web_name": name,
         "is_available": is_available,
+        "price": price,
+        "bioequivalent": None,
         "active_principle": active_principle,
         "sku": sku,
-        "web_name": name,
+        "lab_name": lab_name,
         "url" : url
     })
 
@@ -230,7 +234,6 @@ def ahumada(url,data) -> dict:
     options = Options()
     # options.headless = True  # Ejecuta el navegador en modo headless
     options.add_argument("--headless")  # Ejecutar en modo headless
-    options.add_argument("--incognito")
     options.binary_location = "/usr/bin/google-chrome"  # Ruta al binario de Google Chrome
     service = Service('/usr/local/bin/chromedriver')
     driver = webdriver.Chrome(service=service, options=options)
@@ -241,6 +244,9 @@ def ahumada(url,data) -> dict:
         raise Exception(f"Error al cargar la página: {e}")
 
     try:
+        # consent_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'button.affirm')))
+        # consent_button.click()
+
         # Realizar la solicitud HTTP a la página web
         response = requests.get(url)
         soup = BeautifulSoup(response.content, 'html.parser')
@@ -256,7 +262,7 @@ def ahumada(url,data) -> dict:
 
         # Extraer el Precio
         price = soup.find('span', class_='value d-flex align-items-center').text.strip()
-        # Verificar la disponibilidad del producto
+            # Verificar la disponibilidad del producto
         add_to_cart_button = driver.find_element(By.CSS_SELECTOR, 'button.add-to-cart')
         product_availability = add_to_cart_button.is_displayed() and add_to_cart_button.is_enabled()
         is_available = True if product_availability else False
@@ -267,13 +273,13 @@ def ahumada(url,data) -> dict:
         exit()
 
     data.update({
-        "price": price,
-        "lab_name": lab_name,
-        "bioequivalent": None,
+        "web_name": name,
         "is_available": is_available,
+        "price": price,
+        "bioequivalent": None,
         "active_principle": active_principle,
         "sku": None,
-        "web_name": name,
+        "lab_name": lab_name,
         "url" : url
     })
 
@@ -307,14 +313,16 @@ def ecofarmacias(url,data) -> dict:
     product_title = soup.find('h1', class_='product_title entry-title').text
     name = product_title.split('(')[0].strip()
 
+    # lab_name = [lab.strip(')') for lab in product_title.split('(')[1:]]
+
     data.update({
-        "price": price,
-        "lab_name": None,
-        "bioequivalent": None,
+        "web_name": name,
         "is_available": is_available,
+        "price": price,
+        "bioequivalent": None,
         "active_principle": active_principle,
         "sku": sku,
-        "web_name": name,
+        "lab_name": None,
         "url" : url
     })
 
@@ -329,6 +337,14 @@ def drsimi(url,data) -> dict:
 
     # Encontrar el contenedor del precio
     price_container = soup.find('span', class_='vtex-product-price-1-x-currencyContainer')
+
+    # Extraer y formatear el precio
+    currency_code = price_container.find('span', class_='vtex-product-price-1-x-currencyCode').text
+    currency_integer = price_container.find_all('span', class_='vtex-product-price-1-x-currencyInteger')
+    currency_group = price_container.find('span', class_='vtex-product-price-1-x-currencyGroup').text
+
+    # Formatear el precio
+    # normal_price = f"{currency_code}{currency_integer[0].text}{currency_group}{currency_integer[1].text}"
 
     # Encontrar el contenedor del precio con rebaja
     price_container = soup.find('span', class_='vtex-product-price-1-x-sellingPriceValue')
@@ -371,13 +387,13 @@ def drsimi(url,data) -> dict:
     is_available = True if product_availability else False
 
     data.update({
-        "price": price,
-        "lab_name": None,
-        "bioequivalent": bioequivalent,
+        "web_name": name,
         "is_available": is_available,
+        "price": price,
+        "bioequivalent": bioequivalent,
         "active_principle": active_principle,
         "sku": sku,
-        "web_name": name,
+        "lab_name": None,
         "url" : url
     })
 
@@ -409,13 +425,13 @@ def novasalud(url,data) -> dict:
     lab_name = soup.find('th', string='Laboratorio').find_next_sibling('td').text.strip()
  
     data.update({
-        "price": price,
-        "lab_name": lab_name,
-        "bioequivalent": None,
+        "web_name": name,
         "is_available": is_available,
+        "price": price,
+        "bioequivalent": None,
         "active_principle": active_principle,
         "sku": sku,
-        "web_name": name,
+        "lab_name": lab_name,
         "url" : url
     })
 
@@ -441,13 +457,13 @@ def mercadofarma(url,data) -> dict:
     is_available = 'quedan' in stock_text and '0' not in stock_text
     
     data.update({
-        "price": price,
-        "lab_name": lab_name,
-        "bioequivalent": None,
+        "web_name": name,
         "is_available": is_available,
+        "price": price,
+        "bioequivalent": None,
         "active_principle": None,
         "sku": None,
-        "web_name": name,
+        "lab_name": lab_name,
         "url" : url
     })
 
@@ -479,13 +495,13 @@ def meki(url,data):
             break
     
     data.update({
-        "price": price,
-        "lab_name": lab_name,
-        "bioequivalent": bioequivalent,
+        "web_name": name,
         "is_available": is_available,
+        "price": price,
+        "bioequivalent": bioequivalent,
         "active_principle": active_principle,
         "sku": None,
-        "web_name": name,
+        "lab_name": lab_name,
         "url" : url
     })
 
@@ -539,7 +555,10 @@ def cruzverde(url,data):
         lab_name = laboratory_element.text if laboratory_element else None
 
         name_element = soup.find('h1', class_='text-18 leading-22 font-bold w-3/4 mb-5')
-        name = name_element.text.strip('"').strip() if name_element else None
+        name = name_element.text if name_element else None
+
+
+
     except Exception as e:
         print(f"Error: {e}")
 
@@ -548,54 +567,18 @@ def cruzverde(url,data):
         driver.quit()
 
     data.update({
-        "price": price,
-        "lab_name": lab_name.strip(),
-        "bioequivalent": None,
+        "web_name": name,
         "is_available": None,
+        "price": price,
+        "bioequivalent": None,
         "active_principle": None,
         "sku": None,
-        "web_name": name,
+        "lab_name": lab_name,
         "url": url
     })
 
     return data
 
-def profar(url,data):
-    response = requests.get(url)
-    if response.status_code != 200:
-        raise requests.exceptions.HTTPError(f"Error en la solicitud: {response.status_code}")
-    
-    soup = BeautifulSoup(response.content, 'html.parser')
-    
-    # Extraer el Principio Activo
-    active_principle = soup.find('td', {'data-specification': 'Principio Activo'}).find_next_sibling('td').text.strip()
 
-    # Extraer el nombre del medicamento, SKU, precio y laboratorio
-    title = soup.find('title').text.strip()
-    name = title.split(' ')[0]
-    sku = title.split(' ')[1]
-
-    meta_tags = soup.find_all('meta', {'data-react-helmet': 'true'})
-    lab_name = None
-
-    for tag in meta_tags:
-        if tag.get('property') == 'product:price:amount':
-            price = tag.get('content')
-        elif tag.get('property') == 'product:brand':
-            lab_name = tag.get('content')
-
-    # Verificar si el botón "Comprar" está activo
-    boton_comprar = soup.find('button', text='Comprar')
-    is_available = boton_comprar and 'disabled' not in boton_comprar.attrs
-    data.update({
-        "price": '$'+price,
-        "lab_name": lab_name,
-        "bioequivalent": None,
-        "is_available": is_available,
-        "active_principle": active_principle,
-        "sku": sku,
-        "web_name": name,
-        "url" : url
-    })
-
-    return data
+if __name__ == '__main__':
+    pass
