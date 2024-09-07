@@ -153,6 +153,8 @@ def extract_data(file_path):
             data = p.meki(url,data)
         elif 'cruzverde.cl' in url:
             data = p.cruzverde(url,data)
+        elif 'profar.cl' in url:
+            data = p.profar(url,data)
         else:
             pass
 
