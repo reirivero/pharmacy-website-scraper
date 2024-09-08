@@ -599,3 +599,57 @@ def profar(url,data):
     })
 
     return data
+
+def knoplab(url,data):
+    # URL de la página web
+    url = 'https://www.farmaciasknop.com/products/vitamina-d3-800-ui'
+
+    response = requests.get(url)
+    soup = BeautifulSoup(response.content, 'html.parser')
+
+
+    json_ld_script = soup.find('script', type='application/ld+json').string
+    json_ld = json.loads(json_ld_script)
+
+    sku = json_ld.get('sku', None)
+    price = json_ld.get('offers', {}).get('lowPrice')
+    lab_name = json_ld.get('brand',{}).get('name',None)
+    name = json_ld.get('name', None)
+
+    # Encontrar la etiqueta <meta> con la propiedad 'product:availability'
+    # meta_tag = soup.find('meta', {'property': 'product:availability'})
+
+    # Obtener el valor del atributo 'content'
+    # availability = meta_tag['content'] if meta_tag else 'No disponible'
+    # stock_span = soup.find('span', class_='units-in-stock')
+    # stock = stock_span.text.strip().split(':')[1].strip() if stock_span else False
+    # is_available = True if stock and int(stock) > 0 else False
+    stock_span = soup.find_all('span', class_='units-in-stock')
+
+    stock_p = soup.find('p', class_='units-in-stock')
+    
+    if stock_span:
+        if len(stock_span) > 1:
+            stock_available = [int(st.text.strip().split(':')[1].strip()) > 0 for st in stock_span ]
+            is_available = True if any(stock_available) else False
+        else:
+            stock = stock_span.text.strip().split(':')[1].strip()
+            is_available = True if int(stock) > 0 else False
+    elif stock_p:
+            stock = stock_p.text.strip().split(':')[1].strip()
+            is_available = True if int(stock) > 0 else False
+    else:
+        is_available = False
+
+    data.update({
+        "price": '$'+price,
+        "lab_name": lab_name,
+        "bioequivalent": None,
+        "is_available": is_available,
+        "active_principle": None,
+        "sku": sku,
+        "web_name": name,
+        "url" : url
+    })
+
+    return data
