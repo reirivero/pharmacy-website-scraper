@@ -17,6 +17,7 @@ def transform_data(med_data):
     # Aplicar transformaciones solo a las filas que no son NaN
     df['active_principle'] = df['active_principle'].apply(lambda x: x.title() if isinstance(x, str) else x)
     df['lab_name'] = df['lab_name'].apply(lambda x: x.title() if isinstance(x, str) else x)
+    
     # df['web_name'] = df['web_name'].apply(lambda x: str(x).strip('"') if '"' in x else x.strip())
 
     def clean_price(prc):
