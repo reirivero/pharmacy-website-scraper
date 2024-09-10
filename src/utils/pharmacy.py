@@ -227,39 +227,25 @@ def elquimico(url,data) -> dict:
     return data
 
 def ahumada(url,data) -> dict:
-    options = Options()
-    # options.headless = True  # Ejecuta el navegador en modo headless
-    options.add_argument("--headless")  # Ejecutar en modo headless
-    options.add_argument("--incognito")
-    options.binary_location = "/usr/bin/google-chrome"  # Ruta al binario de Google Chrome
-    service = Service('/usr/local/bin/chromedriver')
-    driver = webdriver.Chrome(service=service, options=options)
-
-    try:
-        driver.get(url)
-    except WebDriverException as e:
-        raise Exception(f"Error al cargar la página: {e}")
-
     try:
         # Realizar la solicitud HTTP a la página web
         response = requests.get(url)
         soup = BeautifulSoup(response.content, 'html.parser')
 
         # Extraer el Principio Activo
-        active_principle = soup.find('th', string='Principio Activo').find_next_sibling('td').text.strip()
+        active_principle = soup.find('th', string='Principio Activo').find_next_sibling('td').text.strip() # type: ignore
 
         # Extraer el Laboratorio
-        lab_name = soup.find('th', string='Laboratorio').find_next_sibling('td').text.strip()
+        lab_name = soup.find('th', string='Laboratorio').find_next_sibling('td').text.strip() # type: ignore
 
         # Extraer el Nombre del Producto
-        name = soup.find('h1', class_='product-name').text.strip()
+        name = soup.find('h1', class_='product-name').text.strip() # type: ignore
 
         # Extraer el Precio
         price = soup.find('span', class_='value d-flex align-items-center').text.strip()
         # Verificar la disponibilidad del producto
-        add_to_cart_button = driver.find_element(By.CSS_SELECTOR, 'button.add-to-cart')
-        product_availability = add_to_cart_button.is_displayed() and add_to_cart_button.is_enabled()
-        is_available = True if product_availability else False
+        add_to_cart_button = soup.find('button', class_='add-to-cart btn btn-primary')
+        is_available = 'Agregar al carrito' in add_to_cart_button.text  # type: ignore
 
     except TimeoutException:
         print("El botón de consentimiento de cookies no se encontró dentro del tiempo especificado.")
@@ -291,13 +277,20 @@ def ecofarmacias(url,data) -> dict:
 
     # Extraer el valor de stock
     stock_elemt = soup.find('p', class_=re.compile(r'stock'))
-    is_available = False if not stock_elemt or stock_elemt.text.strip() != 'Sin existencias' else True
+    
+    add_to_cart_button = soup.find('button', class_='single_add_to_cart_button button alt')
+    
+    is_available = False
+    if stock_elemt:
+        is_available = True if stock_elemt.text.strip() != 'Sin existencias' else False # type: ignore 
+    elif add_to_cart_button:
+        is_available = True if 'Añadir al carrito' in add_to_cart_button.text.strip() else False
 
     # Extraer el SKU
-    sku = soup.find('span', class_='sku').text
+    sku = soup.find('span', class_='sku').text.strip() # type: ignore
 
     # Extraer los principios activos
-    active_principle_elem = soup.find('li', string=lambda x: x and 'Principios Activos:' in x)
+    active_principle_elem = soup.find('li', string=lambda x: x and 'Principios Activos:' in x) # type: ignore
     if active_principle_elem:
         active_principle = active_principle_elem.text.split(': ')[1]
     else: 
@@ -540,6 +533,12 @@ def cruzverde(url,data):
 
         name_element = soup.find('h1', class_='text-18 leading-22 font-bold w-3/4 mb-5')
         name = name_element.text.strip('"').strip() if name_element else None
+
+        more_products_span = soup.find(lambda tag: tag.name == 'span' and 
+                     tag.get('class') == ['ng-star-inserted'] and 
+                     tag.text == "Productos más")
+        # print(more_products_span.text.strip() if more_products_span else 'Not available "Productos Más"')
+        more_products = True if more_products_span else False 
     except Exception as e:
         print(f"Error: {e}")
 
@@ -554,8 +553,9 @@ def cruzverde(url,data):
         "is_available": None,
         "active_principle": None,
         "sku": None,
+        "+products": more_products,
         "web_name": name,
-        "url": url
+        "url": url        
     })
 
     return data
