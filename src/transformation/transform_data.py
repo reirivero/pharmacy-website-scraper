@@ -34,4 +34,20 @@ def transform_data(med_data):
 
     df['price'] = df['price'].apply(clean_price)
 
+    # Renombrar las columnas
+    df = df.rename(columns={
+        'date': 'Fecha',
+        'name': 'Nombre del Remedio',
+        'pharmacy': 'Farmacia',
+        'price': 'Precio',
+        'lab_name': 'Laboratorio',
+        'bioequivalent': '¿Es Bioequivalente?',
+        'is_available': '¿Stock?',
+        'active_principle': 'Principio Activo',
+        'sku': 'SKU',
+        'more_products': 'Cruz Verde - ¿Productos más?',
+        'web_name': 'Nombre (webpage)',
+        'url': 'URL'
+    })
+    
     return df
