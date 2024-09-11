@@ -45,9 +45,9 @@ def transform_data(med_data):
         'is_available': '¿Stock?',
         'active_principle': 'Principio Activo',
         'sku': 'SKU',
-        'more_products': 'Cruz Verde - ¿Productos más?',
+        # 'more_products': 'Cruz Verde - ¿Productos más?',
         'web_name': 'Nombre (webpage)',
         'url': 'URL'
     })
-    
+
     return df

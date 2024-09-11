@@ -1,30 +1,21 @@
 # Importar las posibles librerías
+import re
+import json
 # Beautiful Soup
 from bs4 import BeautifulSoup
-import json
-import requests
-import re
-
 # Selenium  libraries
-from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
 
-
+from .decorators import validate_data, handle_http_request, initialize_driver
 
 # Grupo de funciones según la farmacia a ser escaneada
-def farmex(url,data) -> dict:
-    response = requests.get(url)
-    if response.status_code != 200:
-        raise  requests.exceptions.HTTPError(f"Error en la solicitud: {response.status_code}")
 
-    soup = BeautifulSoup(response.content, 'html.parser')
-
+@handle_http_request
+@validate_data(['price', 'lab_name', 'is_available', 'sku', 'web_name'])
+def farmex(url, soup, data) -> dict:
     # Extract product name from web
     name = soup.find('h1', class_='page-heading').text.strip('"')
 
@@ -36,7 +27,6 @@ def farmex(url,data) -> dict:
     stock_text = product_price_container.find('pre').text.strip()
     is_available = int(stock_text.split(': ')[1]) > 0
     
-    # Agregado el 04-09-2024 en la noche
     # Extract JSON-LD script
     json_ld_script = soup.find('script', type='application/ld+json').string
     json_data = json.loads(json_ld_script)
@@ -46,27 +36,18 @@ def farmex(url,data) -> dict:
     lab_name = json_data.get('brand', {}).get('name', None)
 
     data.update({
-        "price": price,
-        "lab_name": lab_name,
-        "bioequivalent": None,
-        "is_available": is_available,
-        "active_principle": None,
-        "sku": sku,
-        "web_name": name,
-        "url" : url
+        'price': price,
+        'lab_name': lab_name,
+        'is_available': is_available,
+        'sku': sku,
+        'web_name': name,
     })
 
     return data
 
-# Salcobrand pharmacy
-def salcobrand(url,data) -> dict:
-    response = requests.get(url)
-    if response.status_code != 200:
-        raise  requests.exceptions.HTTPError(f"Error en la solicitud: {response.status_code}")
-
-    # Parsear el contenido HTML
-    soup = BeautifulSoup(response.content, 'html.parser')
-
+@handle_http_request
+@validate_data(['price', 'bioequivalent','is_available','web_name'])
+def salcobrand(url,soup, data) -> dict:
     # Buscar el script que contiene 'product_traker_data'
     script_tag = soup.find('script', string=re.compile(r'var product_traker_data ='))
     if not script_tag:
@@ -76,7 +57,7 @@ def salcobrand(url,data) -> dict:
     script_content = script_tag.string
 
     # Extraer el JSON del script
-    json_data = re.search(r'var product_traker_data = ({.*});', script_content).group(1)
+    json_data = re.search(r'var product_traker_data = ({.*});', script_content).group(1) # type: ignore
     product_data = json.loads(json_data)
 
     # Extraer la información requerida
@@ -105,173 +86,124 @@ def salcobrand(url,data) -> dict:
         lab_name = None
 
     data.update({
-        "price": '$'+price,
-        "lab_name": lab_name,
-        "bioequivalent": bioequivalent,
-        "is_available": is_available,
-        "active_principle": active_principle,
-        "sku": sku,
-        "web_name": name,
-        "url" : url
+        'price': '$'+price,
+        'lab_name': lab_name,
+        'bioequivalent': bioequivalent,
+        'is_available': is_available,
+        'active_principle': active_principle,
+        'sku': sku,
+        'web_name': name
     })
 
     return data
 
-# El Búho pharmacy
-def buhochile(url,data) -> dict:    
-    # driver for Selenium
-    options = Options()
-    # options.headless = True  # Ejecuta el navegador en modo headless
-    options.add_argument("--headless")  # Ejecutar en modo headless
-    options.add_argument("--incognito")
-    options.binary_location = "/usr/bin/google-chrome"  # Ruta al binario de Google Chrome
-    service = Service('/usr/local/bin/chromedriver')
-    driver = webdriver.Chrome(service=service, options=options)
-
-    try:
-        driver.get(url)
-    except WebDriverException as e:
-        raise Exception(f"Error al cargar la página: {e}")
-
-    # Obtener el contenido de la página
-    html = driver.page_source
-    soup = BeautifulSoup(html, 'html.parser')
-
+@handle_http_request
+@validate_data(['price', 'lab_name', 'bioequivalent', 'is_available', 'active_principle', 'web_name'])
+def buhochile(url,soup,data) -> dict:    
     # Encontrar el script que contiene los datos JSON
     script = soup.find('script', {'id': '__NEXT_DATA__'})
-    json_data = json.loads(script.string)
+    json_data = json.loads(script.string) # type: ignore
 
     # Extraer los valores requeridos
     product = json_data['props']['pageProps']['product']
-    name = f"{product['name']} {product['tablets']} {product['pharmaceuticForm']}"
+    name = f'{product['name']} {product['tablets']} {product['pharmaceuticForm']}'
     active_principle = product['activePrinciple']
-    price = f"${product['minPrice']}"
+    price = f'${product['minPrice']}'
     bioequivalent = product['bioequivalent']
     lab_name = product['laboratory']['name']
 
     # Extraer la disponibilidad del producto
     meta_availability = soup.find('meta', {'property': 'product:availability'})
-    is_available = meta_availability['content'] == 'in stock'
+    is_available = meta_availability['content'] == 'in stock' # type: ignore
 
     data.update({
-        "price": price,
-        "lab_name": lab_name,
-        "bioequivalent": bioequivalent,
-        "is_available": is_available,
-        "active_principle": active_principle,
-        "sku": None,
-        "web_name": name,
-        "url" : url
+        'price': price,
+        'lab_name': lab_name,
+        'bioequivalent': bioequivalent,
+        'is_available': is_available,
+        'active_principle': active_principle,
+        "web_name": name
     })
-
-    driver.quit()
 
     return data
 
-def elquimico(url,data) -> dict:
-    options = Options()
-    # options.headless = True  # Ejecuta el navegador en modo headless
-    options.add_argument("--headless")  # Ejecutar en modo headless
-    options.add_argument("--incognito")
-    options.binary_location = "/usr/bin/google-chrome"  # Ruta al binario de Google Chrome
-    service = Service('/usr/local/bin/chromedriver')
-    driver = webdriver.Chrome(service=service, options=options)
+@validate_data(['price', 'lab_name', 'is_available', 'active_principle', 'sku', 'web_name'])
+@handle_http_request
+@initialize_driver
+def elquimico(url, driver, soup, data) -> dict:
     try:
         driver.get(url)
     except WebDriverException as e:
         raise Exception(f"Error al cargar la página: {e}")
 
-    response = requests.get(url)
-    if response.status_code != 200:
-        raise  requests.exceptions.HTTPError(f"Error en la solicitud: {response.status_code}")
-
-    soup = BeautifulSoup(response.content, 'html.parser')    
     wait = WebDriverWait(driver, 10)
     price_element = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'span.money-subtotal')))
 
     # Avaiibity - stock 
-
     stock_elem = soup.find(lambda tag: tag.name == 'span' and tag.get('class') == ['productView-info-value'] and ('En stock' in tag.text or 'Agotado' in tag.text))
-    # stock_element = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'span.productView-info-value')))
+
     elem_product = soup.find('h1',{'class':'productView-title'})
     name = elem_product.get_text().strip() if elem_product \
         else "Name product not found"  
  
     price = price_element.text
-    is_available = True if stock_elem.text.strip() == 'En stock' else False # True if stock_element.text.strip() == 'En stock' else False
+    is_available = True if stock_elem.text.strip() == 'En stock' else False # type: ignore
 
     sku_elem = soup.find_all('span',class_='productView-info-value')
     sku = (list(sku_elem))[1].text.strip()
 
     # Encontrar el contenedor del principio activo
     tab_content = soup.find('div', class_='tab-popup-content')
-    active_principle = tab_content.find('strong').text
+    active_principle = tab_content.find('strong').text # type: ignore
 
     # Encontrar el contenedor del vendedor
     vendor_container = soup.find('div', class_='productView-info-item')
-    lab_name = vendor_container.find('span', class_='productView-info-value').text.strip()
+    lab_name = vendor_container.find('span', class_='productView-info-value').text.strip() # type: ignore
     
     driver.quit()
 
     data.update({
-        "price": price,
-        "lab_name": lab_name,
-        "bioequivalent": None,
-        "is_available": is_available,
-        "active_principle": active_principle,
-        "sku": sku,
-        "web_name": name,
-        "url" : url
+        'price': price,
+        'lab_name': lab_name,
+        'is_available': is_available,
+        'active_principle': active_principle,
+        'sku': sku,
+        'web_name': name
     })
 
     return data
 
-def ahumada(url,data) -> dict:
-    try:
-        # Realizar la solicitud HTTP a la página web
-        response = requests.get(url)
-        soup = BeautifulSoup(response.content, 'html.parser')
+@handle_http_request
+@validate_data(['price', 'lab_name', 'is_available', 'active_principle', 'web_name'])
+def ahumada(url,soup,data) -> dict:
+    # Extraer el Principio Activo
+    active_principle = soup.find('th', string='Principio Activo').find_next_sibling('td').text.strip() # type: ignore
 
-        # Extraer el Principio Activo
-        active_principle = soup.find('th', string='Principio Activo').find_next_sibling('td').text.strip() # type: ignore
+    # Extraer el Laboratorio
+    lab_name = soup.find('th', string='Laboratorio').find_next_sibling('td').text.strip() # type: ignore
 
-        # Extraer el Laboratorio
-        lab_name = soup.find('th', string='Laboratorio').find_next_sibling('td').text.strip() # type: ignore
+    # Extraer el Nombre del Producto
+    name = soup.find('h1', class_='product-name').text.strip() # type: ignore
 
-        # Extraer el Nombre del Producto
-        name = soup.find('h1', class_='product-name').text.strip() # type: ignore
-
-        # Extraer el Precio
-        price = soup.find('span', class_='value d-flex align-items-center').text.strip()
-        # Verificar la disponibilidad del producto
-        add_to_cart_button = soup.find('button', class_='add-to-cart btn btn-primary')
-        is_available = 'Agregar al carrito' in add_to_cart_button.text  # type: ignore
-
-    except TimeoutException:
-        print("El botón de consentimiento de cookies no se encontró dentro del tiempo especificado.")
-        driver.quit()
-        exit()
+    # Extraer el Precio
+    price = soup.find('span', class_='value d-flex align-items-center').text.strip() # type: ignore
+    # Verificar la disponibilidad del producto
+    add_to_cart_button = soup.find('button', class_='add-to-cart btn btn-primary')
+    is_available = 'Agregar al carrito' in add_to_cart_button.text  # type: ignore
 
     data.update({
-        "price": price,
-        "lab_name": lab_name,
-        "bioequivalent": None,
-        "is_available": is_available,
-        "active_principle": active_principle,
-        "sku": None,
-        "web_name": name,
-        "url" : url
+        'price': price,
+        'lab_name': lab_name,
+        'is_available': is_available,
+        'active_principle': active_principle,
+        'web_name': name,
     })
 
     return data
 
-def ecofarmacias(url,data) -> dict:
-    response = requests.get(url)
-    if response.status_code != 200:
-        raise  requests.exceptions.HTTPError(f"Error en la solicitud: {response.status_code}")
-
-    soup = BeautifulSoup(response.content, 'html.parser')
-
+@handle_http_request
+@validate_data(['price', 'is_available', 'sku', 'web_name'])
+def ecofarmacias(url,soup,data) -> dict:
     # Extraer el precio
     price = soup.find('bdi').text
 
@@ -301,25 +233,18 @@ def ecofarmacias(url,data) -> dict:
     name = product_title.split('(')[0].strip()
 
     data.update({
-        "price": price,
-        "lab_name": None,
-        "bioequivalent": None,
-        "is_available": is_available,
-        "active_principle": active_principle,
-        "sku": sku,
-        "web_name": name,
-        "url" : url
+        'price': price,
+        'is_available': is_available,
+        'active_principle': active_principle,
+        'sku': sku,
+        'web_name': name
     })
 
     return data
 
-def drsimi(url,data) -> dict:
-    response = requests.get(url)
-    if response.status_code != 200:
-        raise  requests.exceptions.HTTPError(f"Error en la solicitud: {response.status_code}")
-
-    soup = BeautifulSoup(response.content, 'html.parser')
-
+@handle_http_request
+@validate_data(['price','bioequivalent','is_available', 'sku', 'web_name'])
+def drsimi(url,soup,data) -> dict:
     # Encontrar el contenedor del precio
     price_container = soup.find('span', class_='vtex-product-price-1-x-currencyContainer')
 
@@ -364,25 +289,19 @@ def drsimi(url,data) -> dict:
     is_available = True if product_availability else False
 
     data.update({
-        "price": price,
-        "lab_name": None,
-        "bioequivalent": bioequivalent,
-        "is_available": is_available,
-        "active_principle": active_principle,
-        "sku": sku,
-        "web_name": name,
-        "url" : url
+        'price': price,
+        'bioequivalent': bioequivalent,
+        'is_available': is_available,
+        'active_principle': active_principle,
+        'sku': sku,
+        'web_name': name
     })
 
     return data
 
-def novasalud(url,data) -> dict:
-    response = requests.get(url)
-    if response.status_code != 200:
-        raise  requests.exceptions.HTTPError(f"Error en la solicitud: {response.status_code}")
-
-    soup = BeautifulSoup(response.content, 'html.parser')
-
+@handle_http_request
+@validate_data(['price', 'lab_name','is_available', 'active_principle', 'sku', 'web_name'])
+def novasalud(url,soup,data) -> dict:
     name = soup.find('span', class_='base', itemprop='name').text.strip()
 
     # Extraer el SKU
@@ -402,25 +321,19 @@ def novasalud(url,data) -> dict:
     lab_name = soup.find('th', string='Laboratorio').find_next_sibling('td').text.strip()
  
     data.update({
-        "price": price,
-        "lab_name": lab_name,
-        "bioequivalent": None,
-        "is_available": is_available,
-        "active_principle": active_principle,
-        "sku": sku,
-        "web_name": name,
-        "url" : url
+        'price': price,
+        'lab_name': lab_name,
+        'is_available': is_available,
+        'active_principle': active_principle,
+        'sku': sku,
+        'web_name': name
     })
 
     return data
 
-def mercadofarma(url,data) -> dict:
-    response = requests.get(url)
-    if response.status_code != 200:
-        raise  requests.exceptions.HTTPError(f"Error en la solicitud: {response.status_code}")
-
-    soup = BeautifulSoup(response.content, 'html.parser')
-
+@handle_http_request
+@validate_data(['price', 'lab_name', 'is_available', 'web_name'])
+def mercadofarma(url, soup,data) -> dict:
     name = soup.find('h1', class_='product-meta__title').text.strip()
 
     # Extraer el Laboratorio (Vendor)
@@ -434,25 +347,17 @@ def mercadofarma(url,data) -> dict:
     is_available = 'quedan' in stock_text and '0' not in stock_text
     
     data.update({
-        "price": price,
-        "lab_name": lab_name,
-        "bioequivalent": None,
-        "is_available": is_available,
-        "active_principle": None,
-        "sku": None,
-        "web_name": name,
-        "url" : url
+        'price': price,
+        'lab_name': lab_name,
+        'is_available': is_available,
+        'web_name': name
     })
 
     return data
 
-def meki(url,data):
-    response = requests.get(url)
-    if response.status_code != 200:
-        raise requests.exceptions.HTTPError(f"Error en la solicitud: {response.status_code}")
-    
-    soup = BeautifulSoup(response.content, 'html.parser')
-    
+@handle_http_request
+@validate_data(['price', 'lab_name', 'bioequivalent','is_available', 'active_principle', 'web_name'])
+def meki(url,soup, data) -> dict:
     # Encontrar el script con el JSON
     script_tag = soup.find('script', id='__NEXT_DATA__', type='application/json')
     json_data = json.loads(script_tag.string)
@@ -467,42 +372,36 @@ def meki(url,data):
     price = product_data['price']
     is_available = False
     for p_tag in soup.find_all('p', class_='MuiTypography-root MuiTypography-body1 mui-style-m99pms'):
-        if "Recibe" in p_tag.text and "mañana" in p_tag.text:
+        if 'Recibe' in p_tag.text and 'mañana' in p_tag.text:
             is_available = True
             break
     
     data.update({
-        "price": price,
-        "lab_name": lab_name,
+        'price': price,
+        'lab_name': lab_name,
         "bioequivalent": bioequivalent,
-        "is_available": is_available,
-        "active_principle": active_principle,
-        "sku": None,
-        "web_name": name,
-        "url" : url
+        'is_available': is_available,
+        'active_principle': active_principle,
+        'web_name': name
     })
 
     return data
 
-def cruzverde(url,data):
-    options = Options()
-    options.add_argument("--headless")  # Ejecutar en modo headless
-    options.add_argument("--incognito")
-    options.binary_location = "/usr/bin/google-chrome"  # Ruta al binario de Google Chrome
-    service = Service('/usr/local/bin/chromedriver')
-    driver = webdriver.Chrome(service=service, options=options)
-
+@validate_data(['price', 'lab_name','web_name'])
+@handle_http_request
+@initialize_driver
+def cruzverde(url, driver, soup, data) -> dict:
     try:
         driver.get(url)
 
         # Esperar a que el app-root esté presente
-        app_root = WebDriverWait(driver, 20).until(
+        app_root = WebDriverWait(driver, 30).until(
             EC.presence_of_element_located((By.TAG_NAME, "app-root"))
         )
 
         # Obtener el contenido de <app-root>
         app_root_content = app_root.get_attribute('innerHTML')
-        soup = BeautifulSoup(app_root_content, 'html.parser')
+        soup = BeautifulSoup(app_root_content, 'html.parser') # type: ignore
 
         # Encontrar y hacer clic en el botón "Aceptar"
         accept_button = soup.find('button', text='Aceptar')
@@ -513,7 +412,7 @@ def cruzverde(url,data):
         driver.get(url)
 
         # Esperar a que el nuevo app-root esté presente
-        app_root = WebDriverWait(driver, 20).until(
+        app_root = WebDriverWait(driver, 30).until(
             EC.presence_of_element_located((By.TAG_NAME, "app-root"))
         )
 
@@ -521,7 +420,7 @@ def cruzverde(url,data):
         app_root_content = app_root.get_attribute('innerHTML')
 
         # Analizar el contenido con BeautifulSoup
-        soup = BeautifulSoup(app_root_content, 'html.parser')
+        soup = BeautifulSoup(app_root_content, 'html.parser') # type: ignore
 
         # Extraer el precio
         price_element = soup.find('span', class_='font-bold text-prices text-16')
@@ -534,11 +433,12 @@ def cruzverde(url,data):
         name_element = soup.find('h1', class_='text-18 leading-22 font-bold w-3/4 mb-5')
         name = name_element.text.strip('"').strip() if name_element else None
 
-        more_products_span = soup.find(lambda tag: tag.name == 'span' and 
-                     tag.get('class') == ['ng-star-inserted'] and 
-                     tag.text == "Productos más")
-        # print(more_products_span.text.strip() if more_products_span else 'Not available "Productos Más"')
-        more_products = True if more_products_span else False 
+        # more_products_span = soup.find(lambda tag: tag.name == 'span' and 
+        #              tag.get('class') == ['ng-star-inserted'] and 
+        #              tag.text == "Productos más")
+        # # print(more_products_span.text.strip() if more_products_span else 'Not available "Productos Más"')
+        # print(more_products_span.text.strip() if more_products_span else 'Not Productos más') 
+        # more_products = True if more_products_span else False 
     except Exception as e:
         print(f"Error: {e}")
 
@@ -547,26 +447,16 @@ def cruzverde(url,data):
         driver.quit()
 
     data.update({
-        "price": price,
-        "lab_name": lab_name.strip(),
-        "bioequivalent": None,
-        "is_available": None,
-        "active_principle": None,
-        "sku": None,
-        "+products": more_products,
-        "web_name": name,
-        "url": url        
+        'price': price,
+        'lab_name': lab_name.strip(), # type: ignore
+        'web_name': name      
     })
 
     return data
 
-def profar(url,data):
-    response = requests.get(url)
-    if response.status_code != 200:
-        raise requests.exceptions.HTTPError(f"Error en la solicitud: {response.status_code}")
-    
-    soup = BeautifulSoup(response.content, 'html.parser')
-    
+@handle_http_request
+@validate_data(['price', 'lab_name','is_available', 'active_principle', 'sku', 'web_name'])
+def profar(url, soup, data) -> dict:
     # Extraer el Principio Activo
     active_principle = soup.find('td', {'data-specification': 'Principio Activo'}).find_next_sibling('td').text.strip()
 
@@ -588,26 +478,19 @@ def profar(url,data):
     boton_comprar = soup.find('button', text='Comprar')
     is_available = boton_comprar and 'disabled' not in boton_comprar.attrs
     data.update({
-        "price": '$'+price,
-        "lab_name": lab_name,
-        "bioequivalent": None,
-        "is_available": is_available,
-        "active_principle": active_principle,
-        "sku": sku,
-        "web_name": name,
-        "url" : url
+        'price': '$'+price,
+        'lab_name': lab_name,
+        'is_available': is_available,
+        'active_principle': active_principle,
+        'sku': sku,
+        'web_name': name
     })
 
     return data
 
-def knoplab(url,data):
-    # URL de la página web
-    url = 'https://www.farmaciasknop.com/products/vitamina-d3-800-ui'
-
-    response = requests.get(url)
-    soup = BeautifulSoup(response.content, 'html.parser')
-
-
+@handle_http_request
+@validate_data(['price', 'lab_name', 'is_available', 'sku', 'web_name'])
+def knoplab(url, soup,data) -> dict:
     json_ld_script = soup.find('script', type='application/ld+json').string
     json_ld = json.loads(json_ld_script)
 
@@ -616,14 +499,6 @@ def knoplab(url,data):
     lab_name = json_ld.get('brand',{}).get('name',None)
     name = json_ld.get('name', None)
 
-    # Encontrar la etiqueta <meta> con la propiedad 'product:availability'
-    # meta_tag = soup.find('meta', {'property': 'product:availability'})
-
-    # Obtener el valor del atributo 'content'
-    # availability = meta_tag['content'] if meta_tag else 'No disponible'
-    # stock_span = soup.find('span', class_='units-in-stock')
-    # stock = stock_span.text.strip().split(':')[1].strip() if stock_span else False
-    # is_available = True if stock and int(stock) > 0 else False
     stock_span = soup.find_all('span', class_='units-in-stock')
 
     stock_p = soup.find('p', class_='units-in-stock')
@@ -642,14 +517,11 @@ def knoplab(url,data):
         is_available = False
 
     data.update({
-        "price": '$'+price,
-        "lab_name": lab_name,
-        "bioequivalent": None,
-        "is_available": is_available,
-        "active_principle": None,
-        "sku": sku,
-        "web_name": name,
-        "url" : url
+        'price': '$'+price,
+        'lab_name': lab_name,
+        'is_available': is_available,
+        'sku': sku,
+        'web_name': name
     })
 
     return data

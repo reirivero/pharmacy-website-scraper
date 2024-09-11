@@ -1,7 +1,17 @@
 from datetime import datetime
 from src.utils import pharmacy as p
 import pandas as pd
+import logging
+from src.utils.config import load_config
 
+# Configurar el logging
+# logging.basicConfig(filename='extract_data.log', level=logging.ERROR, 
+#                     format='%(asctime)s:%(levelname)s:%(message)s')
+
+config = load_config()
+logging.basicConfig(filename=config['paths']['log_file'], 
+                    level=config['logging']['level'], 
+                    format=config['logging']['format'])
 
 # Example of the dictionary 
 '''
@@ -58,48 +68,61 @@ def extract_data(file_path):
         product_name = row['product_name']
         pharmacy = row['pharmacy']
         print(url)
-        data = {}
 
         # Add info from input_urls.csv
-        data.update({
+        data = {
             'date': datetime.now().strftime('%Y-%m-%d'),
             'name': product_name,
-            'pharmacy': pharmacy
-        })
+            'pharmacy': pharmacy,
+            'price': None,
+            'lab_name': None,
+            'bioequivalent': None,
+            'is_available': None,
+            'active_principle': None,
+            'sku': None,
+            # 'more_products': None,
+            'web_name': None,
+            'url': url
+        }
 
-        if 'buhochile.com' in url:
-            data = p.buhochile(url,data)
-        elif 'farmaciasahumada.cl' in url:
-            data = p.ahumada(url,data)
-        elif 'farmex.cl' in url:
-            data = p.farmex(url,data)
-        elif 'farmaciaelquimico.cl' in url:
-            data = p.elquimico(url,data)
-        elif 'salcobrand.cl' in url:
-            data = p.salcobrand(url,data)
-        elif 'novasalud.cl' in url:
-            data = p.novasalud(url,data)
-        elif 'drsimi.cl' in url:
-            data = p.drsimi(url,data)
-        elif 'ecofarmacias.cl' in url:
-            data = p.ecofarmacias(url,data)
-        elif 'mercadofarma.cl' in url:
-            data = p.mercadofarma(url,data)
-        elif 'farmaciameki.cl' in url:
-            data = p.meki(url,data)
-        elif 'cruzverde.cl' in url:
-            data = p.cruzverde(url,data)
-        elif 'profar.cl' in url:
-            data = p.profar(url,data)
-        elif 'farmaciasknop.com' in url:
-            data = p.knoplab(url,data)
-        else:
-            pass
+        try:
+            # Llamar a la función de scraping correspondiente
+            if 'buhochile.com' in url:
+                data.update(p.buhochile(url,data)) # type: ignore
+            elif 'farmaciasahumada.cl' in url:
+                data.update(p.ahumada(url,data)) # type: ignore
+            elif 'farmex.cl' in url:
+                data.update(p.farmex(url,data)) # type: ignore
+            elif 'farmaciaelquimico.cl' in url:
+                data.update(p.elquimico(url,data)) # type: ignore
+            elif 'salcobrand.cl' in url:
+                data.update(p.salcobrand(url,data)) # type: ignore
+            elif 'novasalud.cl' in url:
+                data.update(p.novasalud(url,data)) # type: ignore
+            elif 'drsimi.cl' in url:
+                data.update(p.drsimi(url,data)) # type: ignore
+            elif 'ecofarmacias.cl' in url:
+                data.update(p.ecofarmacias(url,data)) # type: ignore
+            elif 'mercadofarma.cl' in url:
+                data.update(p.mercadofarma(url,data)) # type: ignore
+            elif 'farmaciameki.cl' in url:
+                data.update(p.meki(url,data)) # type: ignore
+            elif 'cruzverde.cl' in url:
+                data.update(p.cruzverde(url,data)) # type: ignore
+            elif 'profar.cl' in url:
+                data.update(p.profar(url,data)) # type: ignore
+            elif 'farmaciasknop.com' in url:
+                data.update(p.knoplab(url,data)) # type: ignore
+            else:
+                raise ValueError(f"URL no reconocida: {url}")
+
+        except Exception as e:
+            logging.error(f"Error al procesar la URL {url}: {e}")
+            continue
 
         # update the dict
         if product_name not in med_data:
             med_data[product_name] = {}
         med_data[product_name][pharmacy] = data
-        # print(med_data)
     
     return med_data
