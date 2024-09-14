@@ -1,10 +1,3 @@
-<<<<<<< HEAD
-import logging
-
-def load_data(data):
-    logging.info("Cargando datos en la base de datos")
-    # Código para cargar los datos en la base de datos
-=======
 """
 This module contains functions to load data into CSV files.
 
@@ -34,4 +27,3 @@ def load_data(df,output_file):
     
     # Save the DataFrame to the file
     df.to_csv(output_file, mode='a', header=not file_exists, index=False)
->>>>>>> feature/improve-etl-scraping
