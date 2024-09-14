@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from .extraction import *
 from .transformation import *
 from .loading import *
@@ -7,3 +8,6 @@ global_variable = "This is a global variable"
 
 # Cualquier inicialización necesaria para el paquete principal
 print("Paquete principal inicializado")
+=======
+
+>>>>>>> feature/improve-etl-scraping
