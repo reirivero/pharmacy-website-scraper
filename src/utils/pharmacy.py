@@ -1,9 +1,25 @@
-# Importar las posibles librerías
+"""
+This module contains functions to scrape medication data from various pharmacy websites.
+
+Functions:
+- farmex: Scrapes medication data from the Farmex website.
+- salcobrand: Scrapes medication data from the Salcobrand website.
+- elquimico: Scrapes medication data from the El Químico website.
+- buhochile: Scrapes medication data from the El Buho website.
+- ahumada: Scrapes medication data from the Farmacias Ahumada website.
+- ecofarmacias: Scrapes medication data from the Eco Farmacias website.
+- drsimi: Scrapes medication data from the Dr Simi website.
+- novasalud: Scrapes medication data from the Nova Salud website.
+- mercadofama: Scrapes medication data from the Mercado Fama website.
+- meki: Scrapes medication data from the Meki website.
+- profar: Scrapes medication data from the Profar website.
+- knop: Scrapes medication data from the Knop Laboratorios website.
+- cruzverde: Scrapes medication data from the Cruz Verde website.
+"""
+
 import re
 import json
-# Beautiful Soup
 from bs4 import BeautifulSoup
-# Selenium  libraries
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import WebDriverException
@@ -16,6 +32,23 @@ from .decorators import validate_data, handle_http_request, initialize_driver
 @handle_http_request
 @validate_data(['price', 'lab_name', 'is_available', 'sku', 'web_name'])
 def farmex(url, soup, data) -> dict:
+    """
+    Scrapes medication data from the Farmex website.
+
+    Parameters
+    ----------
+    url : str
+        The URL of the Farmex product page.
+    soup : BeautifulSoup object
+        The BeautifulSoup object containing the HTML content of the page.
+    data : dict
+        A dictionary to store the scraped data.
+
+    Returns
+    -------
+    dict
+        The updated dictionary with the scraped data.
+    """
     # Extract product name from web
     name = soup.find('h1', class_='page-heading').text.strip('"')
 
@@ -48,6 +81,23 @@ def farmex(url, soup, data) -> dict:
 @handle_http_request
 @validate_data(['price', 'bioequivalent','is_available','web_name'])
 def salcobrand(url,soup, data) -> dict:
+    """
+    Scrapes medication data from the Salcobrand website.
+
+    Parameters
+    ----------
+    url : str
+        The URL of the Salcobrand product page.
+    soup : BeautifulSoup object
+        The BeautifulSoup object containing the HTML content of the page.
+    data : dict
+        A dictionary to store the scraped data.
+
+    Returns
+    -------
+    dict
+        The updated dictionary with the scraped data.
+    """
     # Buscar el script que contiene 'product_traker_data'
     script_tag = soup.find('script', string=re.compile(r'var product_traker_data ='))
     if not script_tag:
@@ -99,7 +149,24 @@ def salcobrand(url,soup, data) -> dict:
 
 @handle_http_request
 @validate_data(['price', 'lab_name', 'bioequivalent', 'is_available', 'active_principle', 'web_name'])
-def buhochile(url,soup,data) -> dict:    
+def buhochile(url,soup,data) -> dict:
+    """
+    Scrapes medication data from the El Buho website.
+
+    Parameters
+    ----------
+    url : str
+        The URL of the El Buho product page.
+    soup : BeautifulSoup object
+        The BeautifulSoup object containing the HTML content of the page.
+    data : dict
+        A dictionary to store the scraped data.
+
+    Returns
+    -------
+    dict
+        The updated dictionary with the scraped data.
+    """
     # Encontrar el script que contiene los datos JSON
     script = soup.find('script', {'id': '__NEXT_DATA__'})
     json_data = json.loads(script.string) # type: ignore
@@ -131,6 +198,25 @@ def buhochile(url,soup,data) -> dict:
 @handle_http_request
 @initialize_driver
 def elquimico(url, driver, soup, data) -> dict:
+    """
+    Scrapes medication data from the El Químico website.
+
+    Parameters
+    ----------
+    url : str
+        The URL of the El Químico product page.
+    driver : WebDriver
+        The Selenium WebDriver instance.
+    soup : BeautifulSoup object
+        The BeautifulSoup object containing the HTML content of the page.
+    data : dict
+        A dictionary to store the scraped data.
+
+    Returns
+    -------
+    dict
+        The updated dictionary with the scraped data.
+    """
     try:
         driver.get(url)
     except WebDriverException as e:
@@ -176,6 +262,23 @@ def elquimico(url, driver, soup, data) -> dict:
 @handle_http_request
 @validate_data(['price', 'lab_name', 'is_available', 'active_principle', 'web_name'])
 def ahumada(url,soup,data) -> dict:
+    """
+    Scrapes medication data from the Farmacias Ahumada website.
+
+    Parameters
+    ----------
+    url : str
+        The URL of the Farmacias Ahumada product page.
+    soup : BeautifulSoup object
+        The BeautifulSoup object containing the HTML content of the page.
+    data : dict
+        A dictionary to store the scraped data.
+
+    Returns
+    -------
+    dict
+        The updated dictionary with the scraped data.
+    """
     # Extraer el Principio Activo
     active_principle = soup.find('th', string='Principio Activo').find_next_sibling('td').text.strip() # type: ignore
 
@@ -204,6 +307,23 @@ def ahumada(url,soup,data) -> dict:
 @handle_http_request
 @validate_data(['price', 'is_available', 'sku', 'web_name'])
 def ecofarmacias(url,soup,data) -> dict:
+    """
+    Scrapes medication data from the Eco Farmacias website.
+
+    Parameters
+    ----------
+    url : str
+        The URL of the Eco Farmacias product page.
+    soup : BeautifulSoup object
+        The BeautifulSoup object containing the HTML content of the page.
+    data : dict
+        A dictionary to store the scraped data.
+
+    Returns
+    -------
+    dict
+        The updated dictionary with the scraped data.
+    """
     # Extraer el precio
     price = soup.find('bdi').text
 
@@ -245,6 +365,23 @@ def ecofarmacias(url,soup,data) -> dict:
 @handle_http_request
 @validate_data(['price','bioequivalent','is_available', 'sku', 'web_name'])
 def drsimi(url,soup,data) -> dict:
+    """
+    Scrapes medication data from the Dr Simi website.
+
+    Parameters
+    ----------
+    url : str
+        The URL of the Dr Simi product page.
+    soup : BeautifulSoup object
+        The BeautifulSoup object containing the HTML content of the page.
+    data : dict
+        A dictionary to store the scraped data.
+
+    Returns
+    -------
+    dict
+        The updated dictionary with the scraped data.
+    """
     # Encontrar el contenedor del precio
     price_container = soup.find('span', class_='vtex-product-price-1-x-currencyContainer')
 
@@ -302,6 +439,23 @@ def drsimi(url,soup,data) -> dict:
 @handle_http_request
 @validate_data(['price', 'lab_name','is_available', 'active_principle', 'sku', 'web_name'])
 def novasalud(url,soup,data) -> dict:
+    """
+    Scrapes medication data from the Nova Salud website.
+
+    Parameters
+    ----------
+    url : str
+        The URL of the Nova Salud product page.
+    soup : BeautifulSoup object
+        The BeautifulSoup object containing the HTML content of the page.
+    data : dict
+        A dictionary to store the scraped data.
+
+    Returns
+    -------
+    dict
+        The updated dictionary with the scraped data.
+    """
     name = soup.find('span', class_='base', itemprop='name').text.strip()
 
     # Extraer el SKU
@@ -334,6 +488,23 @@ def novasalud(url,soup,data) -> dict:
 @handle_http_request
 @validate_data(['price', 'lab_name', 'is_available', 'web_name'])
 def mercadofarma(url, soup,data) -> dict:
+    """
+    Scrapes medication data from the Mercado Fama website.
+
+    Parameters
+    ----------
+    url : str
+        The URL of the Mercado Fama product page.
+    soup : BeautifulSoup object
+        The BeautifulSoup object containing the HTML content of the page.
+    data : dict
+        A dictionary to store the scraped data.
+
+    Returns
+    -------
+    dict
+        The updated dictionary with the scraped data.
+    """
     name = soup.find('h1', class_='product-meta__title').text.strip()
 
     # Extraer el Laboratorio (Vendor)
@@ -358,6 +529,23 @@ def mercadofarma(url, soup,data) -> dict:
 @handle_http_request
 @validate_data(['price', 'lab_name', 'bioequivalent','is_available', 'active_principle', 'web_name'])
 def meki(url,soup, data) -> dict:
+    """
+    Scrapes medication data from the Meki website.
+
+    Parameters
+    ----------
+    url : str
+        The URL of the Meki product page.
+    soup : BeautifulSoup object
+        The BeautifulSoup object containing the HTML content of the page.
+    data : dict
+        A dictionary to store the scraped data.
+
+    Returns
+    -------
+    dict
+        The updated dictionary with the scraped data.
+    """
     # Encontrar el script con el JSON
     script_tag = soup.find('script', id='__NEXT_DATA__', type='application/json')
     json_data = json.loads(script_tag.string)
@@ -391,6 +579,25 @@ def meki(url,soup, data) -> dict:
 @handle_http_request
 @initialize_driver
 def cruzverde(url, driver, soup, data) -> dict:
+    """
+    Scrapes medication data from the Cruz Verde website.
+
+    Parameters
+    ----------
+    url : str
+        The URL of the Cruz Verde product page.
+    driver : WebDriver
+        The Selenium WebDriver instance.
+    soup : BeautifulSoup object
+        The BeautifulSoup object containing the HTML content of the page.
+    data : dict
+        A dictionary to store the scraped data.
+
+    Returns
+    -------
+    dict
+        The updated dictionary with the scraped data.
+    """
     try:
         driver.get(url)
 
@@ -457,6 +664,23 @@ def cruzverde(url, driver, soup, data) -> dict:
 @handle_http_request
 @validate_data(['price', 'lab_name','is_available', 'active_principle', 'sku', 'web_name'])
 def profar(url, soup, data) -> dict:
+    """
+    Scrapes medication data from the Profar website.
+
+    Parameters
+    ----------
+    url : str
+        The URL of the Profar product page.
+    soup : BeautifulSoup object
+        The BeautifulSoup object containing the HTML content of the page.
+    data : dict
+        A dictionary to store the scraped data.
+
+    Returns
+    -------
+    dict
+        The updated dictionary with the scraped data.
+    """
     # Extraer el Principio Activo
     active_principle = soup.find('td', {'data-specification': 'Principio Activo'}).find_next_sibling('td').text.strip()
 
@@ -491,6 +715,23 @@ def profar(url, soup, data) -> dict:
 @handle_http_request
 @validate_data(['price', 'lab_name', 'is_available', 'sku', 'web_name'])
 def knoplab(url, soup,data) -> dict:
+    """
+    Scrapes medication data from the Knop Laboratorios website.
+
+    Parameters
+    ----------
+    url : str
+        The URL of the Knop Laboratorios product page.
+    soup : BeautifulSoup object
+        The BeautifulSoup object containing the HTML content of the page.
+    data : dict
+        A dictionary to store the scraped data.
+
+    Returns
+    -------
+    dict
+        The updated dictionary with the scraped data.
+    """
     json_ld_script = soup.find('script', type='application/ld+json').string
     json_ld = json.loads(json_ld_script)
 

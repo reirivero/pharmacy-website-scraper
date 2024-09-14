@@ -1,3 +1,10 @@
+"""
+This module contains functions to extract medication data from various pharmacy websites.
+
+Functions:
+- extract_data: Extracts medication data from a CSV file and scrapes additional information from pharmacy websites.
+"""
+
 from datetime import datetime
 from src.utils import pharmacy as p
 import pandas as pd
@@ -60,6 +67,19 @@ med_data = {
 '''
 
 def extract_data(file_path):
+    """
+    Extracts medication data from a CSV file and scrapes additional information from pharmacy websites.
+
+    Parameters
+    ----------
+    file_path : str
+        The path to the CSV file containing the initial medication data.
+
+    Returns
+    -------
+    dict
+        A dictionary containing the extracted and scraped medication data.
+    """
     input_data = pd.read_csv(file_path)
     med_data = {}
 

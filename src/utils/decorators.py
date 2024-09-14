@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
 
 def initialize_driver(func):
     @wraps(func)
@@ -11,9 +12,9 @@ def initialize_driver(func):
         options = Options()
         options.add_argument("--headless")
         options.add_argument("--incognito")
-        options.binary_location = "/usr/bin/google-chrome"
-        service = Service('/usr/local/bin/chromedriver')
-        driver = webdriver.Chrome(service=service, options=options)
+        # options.binary_location = "/usr/bin/google-chrome"
+        # service = Service('/usr/local/bin/chromedriver')
+        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
         try:
             result = func(url, driver, *args, **kwargs)
         finally:

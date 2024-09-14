@@ -1,15 +1,29 @@
-# import logging
+"""
+This module contains functions to load data into CSV files.
+
+Functions:
+- load_data: Loads a pandas DataFrame into a CSV file, appending if the file already exists.
+"""
+
 import os
-# from src.extraction.extract_data import med_data
-# import pandas as pd
-
-# file_path = os.path.abspath('data/output_urls.csv')
-
-# output_data = []
 
 def load_data(df,output_file):
-    # Verificar si el archivo ya existe
+    """
+    Loads a pandas DataFrame into a CSV file, appending if the file already exists.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        The pandas DataFrame to be loaded into the CSV file.
+    output_file : str
+        The name of the output CSV file.
+
+    Returns
+    -------
+    None
+    """
+    # Check if the file already exists
     file_exists = os.path.isfile(output_file)
     
-    # Guardar el DataFrame en el archivo
+    # Save the DataFrame to the file
     df.to_csv(output_file, mode='a', header=not file_exists, index=False)
