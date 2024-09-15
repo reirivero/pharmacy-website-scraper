@@ -107,34 +107,35 @@ def extract_data(file_path):
 
         try:
             # Llamar a la función de scraping correspondiente
-            if 'buhochile.com' in url:
-                data.update(p.buhochile(url,data)) # type: ignore
-            elif 'farmaciasahumada.cl' in url:
-                data.update(p.ahumada(url,data)) # type: ignore
-            elif 'farmex.cl' in url:
-                data.update(p.farmex(url,data)) # type: ignore
-            elif 'farmaciaelquimico.cl' in url:
-                data.update(p.elquimico(url,data)) # type: ignore
-            elif 'salcobrand.cl' in url:
-                data.update(p.salcobrand(url,data)) # type: ignore
-            elif 'novasalud.cl' in url:
-                data.update(p.novasalud(url,data)) # type: ignore
-            elif 'drsimi.cl' in url:
-                data.update(p.drsimi(url,data)) # type: ignore
-            elif 'ecofarmacias.cl' in url:
-                data.update(p.ecofarmacias(url,data)) # type: ignore
-            elif 'mercadofarma.cl' in url:
-                data.update(p.mercadofarma(url,data)) # type: ignore
-            elif 'farmaciameki.cl' in url:
-                data.update(p.meki(url,data)) # type: ignore
-            elif 'cruzverde.cl' in url:
-                data.update(p.cruzverde(url,data)) # type: ignore
-            elif 'profar.cl' in url:
-                data.update(p.profar(url,data)) # type: ignore
-            elif 'farmaciasknop.com' in url:
-                data.update(p.knoplab(url,data)) # type: ignore
-            else:
-                raise ValueError(f"URL no reconocida: {url}")
+            match url:
+                case url if 'buhochile.com' in url:
+                    data.update(p.buhochile(url, data))  # type: ignore
+                case url if 'farmaciasahumada.cl' in url:
+                    data.update(p.ahumada(url, data))  # type: ignore
+                case url if 'farmex.cl' in url:
+                    data.update(p.farmex(url, data))  # type: ignore
+                case url if 'farmaciaelquimico.cl' in url:
+                    data.update(p.elquimico(url, data))  # type: ignore
+                case url if 'salcobrand.cl' in url:
+                    data.update(p.salcobrand(url, data))  # type: ignore
+                case url if 'novasalud.cl' in url:
+                    data.update(p.novasalud(url, data))  # type: ignore
+                case url if 'drsimi.cl' in url:
+                    data.update(p.drsimi(url, data))  # type: ignore
+                case url if 'ecofarmacias.cl' in url:
+                    data.update(p.ecofarmacias(url, data))  # type: ignore
+                case url if 'mercadofarma.cl' in url:
+                    data.update(p.mercadofarma(url, data))  # type: ignore
+                case url if 'farmaciameki.cl' in url:
+                    data.update(p.meki(url, data))  # type: ignore
+                case url if 'cruzverde.cl' in url:
+                    data.update(p.cruzverde(url, data))  # type: ignore
+                case url if 'profar.cl' in url:
+                    data.update(p.profar(url, data))  # type: ignore
+                case url if 'farmaciasknop.com' in url:
+                    data.update(p.knoplab(url, data))  # type: ignore
+                case _:
+                    raise ValueError(f"URL no reconocida: {url}")
 
         except Exception as e:
             logging.error(f"Error al procesar la URL {url}: {e}")
