@@ -1,7 +1,7 @@
 # config.yaml
 paths:
-  input_file: './data/input_urls.csv'
-  output_file: './data/output_data.csv'
+  input_file: './data/inputv2.csv'
+  output_file: './data/output_datav2.csv'
   log_file: './logs/extract_data.log'
 
 logging:

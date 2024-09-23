@@ -133,6 +133,12 @@ def extract_data(file_path):
                 data.update(p.profar(url,data)) # type: ignore
             elif 'farmaciasknop.com' in url:
                 data.update(p.knoplab(url,data)) # type: ignore
+            elif 'anticonceptivo.cl' in url:
+                data.update(p.anticonceptivo_cl(url,data)) # type: ignore
+            elif 'farmaciajvf' in url:
+                data.update(p.farmaciajvf(url,data)) # type: ignore
+            elif 'farmaloop.cl' in url:
+                data.update(p.farmaloop(url,data)) # type: ignore
             else:
                 raise ValueError(f"URL no reconocida: {url}")
 
