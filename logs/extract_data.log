@@ -4,3 +4,18 @@
 2024-09-11 19:18:41,950:ERROR:Error al procesar la URL https://www.cruzverde.cl/infor-vit-vitamina-d3-800-ui-30-comprimidos/289897.html: 'NoneType' object has no attribute 'strip'
 2024-09-11 19:20:14,035:ERROR:Error al procesar la URL https://www.cruzverde.cl/acuode-colecalciferol-05-gr-polvo-para-solucion-oral-2-sobres/289423.html?srsltid=AfmBOopJgxLPqr_XDmqteabh5LRdEceK3Dt0PjRA_RiggUztHfmNq4_S: 'NoneType' object has no attribute 'strip'
 2024-09-15 15:55:06,920:ERROR:Error al procesar la URL https://www.cruzverde.cl/infor-vit-vitamina-d3-800-ui-30-comprimidos/289897.html: 'NoneType' object has no attribute 'strip'
+2024-09-14 12:05:55,594:ERROR:Error al procesar la URL https://www.cruzverde.cl/hidroferol-calcifediol-0266-mg-3-capsulas-blandas/385961.html?srsltid=AfmBOoo9r5AajQeTEzR2j8wDS74vS2Ww-U91rJ8LeRiBLLkM5bKOZtks: 'NoneType' object has no attribute 'strip'
+2024-09-23 15:18:23,422:ERROR:Error al procesar la URL https://www.farmaloop.cl/products/antrofi-1-crema-x-30-gr-140687/: 'NoneType' object has no attribute 'find'
+2024-09-23 15:19:05,422:ERROR:Error al procesar la URL https://farmaciajvf.com/products/antrofi-1-20-aplicaciones-x-30-g-crema-vaginal-farmacias-jvf: Missing required data: price
+2024-09-23 15:19:12,144:ERROR:Error al procesar la URL https://anticonceptivo.cl/producto/antrofi?: Missing required data: price
+2024-09-23 15:19:18,274:ERROR:Error al procesar la URL https://www.farmaloop.cl/products/lirex-25-mg-x-30-comprimidos-107629/: 'NoneType' object has no attribute 'find'
+2024-09-23 15:20:00,049:ERROR:Error al procesar la URL https://farmaciajvf.com/products/lirex-x-30-comprimidos-farmacias-jvf: Missing required data: price
+2024-09-23 15:20:41,661:ERROR:Error al procesar la URL https://farmaciajvf.com/products/lirex-x-30-comprimidos-farmacias-jvf: Missing required data: price
+2024-09-23 15:23:26,543:ERROR:Error al procesar la URL https://www.farmaloop.cl/products/antrofi-1-crema-x-30-gr-140687/: 'NoneType' object has no attribute 'find'
+2024-09-23 15:24:04,841:ERROR:Error al procesar la URL https://www.farmaloop.cl/products/antrofi-1-crema-x-30-gr-140687/: 'NoneType' object has no attribute 'find'
+2024-09-23 15:24:46,319:ERROR:Error al procesar la URL https://farmaciajvf.com/products/antrofi-1-20-aplicaciones-x-30-g-crema-vaginal-farmacias-jvf: Missing required data: price
+2024-09-23 15:24:53,140:ERROR:Error al procesar la URL https://anticonceptivo.cl/producto/antrofi?: Missing required data: price
+2024-09-23 15:24:59,045:ERROR:Error al procesar la URL https://www.farmaloop.cl/products/lirex-25-mg-x-30-comprimidos-107629/: 'NoneType' object has no attribute 'find'
+2024-09-23 15:25:40,995:ERROR:Error al procesar la URL https://farmaciajvf.com/products/lirex-x-30-comprimidos-farmacias-jvf: Missing required data: price
+2024-09-23 15:26:22,848:ERROR:Error al procesar la URL https://farmaciajvf.com/products/lirex-x-30-comprimidos-farmacias-jvf: Missing required data: price
+2024-09-23 16:32:16,545:ERROR:Error al procesar la URL https://www.farmaloop.cl/products/antrofi-1-crema-x-30-gr-140687/: farmaloop() missing 2 required positional arguments: 'soup' and 'data'

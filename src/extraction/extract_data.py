@@ -134,6 +134,12 @@ def extract_data(file_path):
                     data.update(p.profar(url, data))  # type: ignore
                 case url if 'farmaciasknop.com' in url:
                     data.update(p.knoplab(url, data))  # type: ignore
+                case url if 'farmaciajvf' in url:
+                    data.update(p.farmaciajvf(url, data))  # type: ignore
+                case url if 'anticonceptivo.cl' in url:
+                    data.update(p.anticonceptivo_cl(url, data))  # type: ignore
+                case url if 'farmaloop.cl' in url:
+                    data.update(p.farmaloop(url, data))  # type: ignore
                 case _:
                     raise ValueError(f"URL no reconocida: {url}")
 
