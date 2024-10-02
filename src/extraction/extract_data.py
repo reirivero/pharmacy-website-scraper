@@ -84,7 +84,7 @@ def extract_data(file_path):
     med_data = {}
 
     for index, row in input_data.iterrows():
-        url = row['url']
+        url = row['url'].strip('"')
         product_name = row['product_name']
         pharmacy = row['pharmacy']
         print(url)
@@ -146,7 +146,8 @@ def extract_data(file_path):
         except Exception as e:
             logging.error(f"Error al procesar la URL {url}: {e}")
             continue
-
+        
+        print(data['price'])
         # update the dict
         if product_name not in med_data:
             med_data[product_name] = {}

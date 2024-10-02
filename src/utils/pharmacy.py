@@ -182,13 +182,30 @@ def buhochile(url,soup,data) -> dict:
     product = json_data['props']['pageProps']['product']
     name = f'{product['name']} {product['tablets']} {product['pharmaceuticForm']}'
     active_principle = product['activePrinciple']
-    price = f'${product['minPrice']}'
+    price = f'${product['minPrice']}' if product['minPrice'] != 0 else None
     bioequivalent = product['bioequivalent']
     lab_name = product['laboratory']['name']
 
     # Extraer la disponibilidad del producto
-    meta_availability = soup.find('meta', {'property': 'product:availability'})
-    is_available = meta_availability['content'] == 'in stock' # type: ignore
+    # Abre la página web
+    # Configura Selenium
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")  # Ejecuta el navegador en modo headless
+    chrome_options.add_argument("--incognito")
+
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+    driver.get(url)
+
+    # Espera a que la página cargue completamente
+    time.sleep(5)  # Ajusta el tiempo según sea necesario
+
+    # Obtén el contenido de la página
+    page_source = driver.page_source
+
+    # Analiza el HTML con BeautifulSoup
+    soup = BeautifulSoup(page_source, 'html.parser')
+    stock = soup.find('strong')
+    is_available = False if stock2.text.strip() == 'Sin stock disponible' and price == None else True # type: ignore
 
     data.update({
         'price': price,
@@ -296,7 +313,7 @@ def ahumada(url,soup,data) -> dict:
     name = soup.find('h1', class_='product-name').text.strip() # type: ignore
 
     # Extraer el Precio
-    price = soup.find('span', class_='value d-flex align-items-center').text.strip() # type: ignore
+    price = soup.find('span', class_='value d-flex align-items-center').text.strip()[:7] # type: ignore
     # Verificar la disponibilidad del producto
     add_to_cart_button = soup.find('button', class_='add-to-cart btn btn-primary')
     is_available = 'Agregar al carrito' in add_to_cart_button.text  # type: ignore
@@ -922,7 +939,7 @@ def anticonceptivo_cl(url,data) -> dict:
 
     # Obtener el precio
     price_element = soup.find('span', class_='font-poppins font-36 bold color-009BE8')
-    price = price_element.text.strip()[:7] if price_element else None
+    price = price_element.text.strip()[:7].strip('C') if price_element else None
 
     # Obtener el SKU
     sku_element = soup.find('span', class_='font-poppins font-16 color-009BE8')
