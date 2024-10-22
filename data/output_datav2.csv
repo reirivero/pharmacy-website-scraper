@@ -1,0 +1,7 @@
+Fecha,Nombre del Remedio,Farmacia,Precio,Laboratorio,¿Es Bioequivalente?,¿Stock?,Principio Activo,SKU,Nombre (webpage),URL
+2024-09-23,Antrofi,Farmaloop,23090.0,Eurofarma Chile S.A.,,True,Promestrieno 1 %,,ANTROFI 1% CREMA X 30 GR,https://www.farmaloop.cl/products/antrofi-1-crema-x-30-gr-140687/
+2024-09-23,Antrofi,Farmacia JVF,28990.0,Eurofarma,False,True,Promestrieno 1%,,Antrofi 1% 20 Aplicaciones x 30 g Crema Vaginal,https://farmaciajvf.com/products/antrofi-1-20-aplicaciones-x-30-g-crema-vaginal-farmacias-jvf
+2024-09-23,Antrofi,Anticonceptivo.cl,20990.0,Eurofarma,,False,,2415781,ANTROFI,https://anticonceptivo.cl/producto/antrofi?
+2024-09-23,Tibolona: Lirex,Farmaloop,,Laboratorios Silesia Sa,,False,"Tibolona 2,5 Mg",,"LIREX 2,5 MG X 30 COMPRIMIDOS",https://www.farmaloop.cl/products/lirex-25-mg-x-30-comprimidos-107629/
+2024-09-23,Tibolona: Lirex,Farmacia JVF,19990.0,Silesia,True,True,"Tibolona 2,5 Mg",,"Lirex 2,5 mg x 30 Comprimidos",https://farmaciajvf.com/products/lirex-x-30-comprimidos-farmacias-jvf
+2024-09-23,Tibolona: Lirex,Anticonceptivo.cl,20790.0,Silesia,,False,,963483,LIREX,https://anticonceptivo.cl/producto/lirex

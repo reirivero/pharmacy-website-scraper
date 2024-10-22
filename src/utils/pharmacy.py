@@ -15,15 +15,22 @@ Functions:
 - profar: Scrapes medication data from the Profar website.
 - knop: Scrapes medication data from the Knop Laboratorios website.
 - cruzverde: Scrapes medication data from the Cruz Verde website.
+- farmaciajvf: Scrapes medication data from the Farmacia JVF website
 """
 
 import re
 import json
+import time
 from bs4 import BeautifulSoup
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.support import expected_conditions as EC
+
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from selenium import webdriver
 
 from .decorators import validate_data, handle_http_request, initialize_driver
 
@@ -175,13 +182,30 @@ def buhochile(url,soup,data) -> dict:
     product = json_data['props']['pageProps']['product']
     name = f'{product['name']} {product['tablets']} {product['pharmaceuticForm']}'
     active_principle = product['activePrinciple']
-    price = f'${product['minPrice']}'
+    price = f'${product['minPrice']}' if product['minPrice'] != 0 else None
     bioequivalent = product['bioequivalent']
     lab_name = product['laboratory']['name']
 
     # Extraer la disponibilidad del producto
-    meta_availability = soup.find('meta', {'property': 'product:availability'})
-    is_available = meta_availability['content'] == 'in stock' # type: ignore
+    # Abre la página web
+    # Configura Selenium
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")  # Ejecuta el navegador en modo headless
+    chrome_options.add_argument("--incognito")
+
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+    driver.get(url)
+
+    # Espera a que la página cargue completamente
+    time.sleep(5)  # Ajusta el tiempo según sea necesario
+
+    # Obtén el contenido de la página
+    page_source = driver.page_source
+
+    # Analiza el HTML con BeautifulSoup
+    soup = BeautifulSoup(page_source, 'html.parser')
+    stock = soup.find('strong')
+    is_available = False if stock.text.strip() == 'Sin stock disponible' and price == None else True # type: ignore
 
     data.update({
         'price': price,
@@ -289,7 +313,7 @@ def ahumada(url,soup,data) -> dict:
     name = soup.find('h1', class_='product-name').text.strip() # type: ignore
 
     # Extraer el Precio
-    price = soup.find('span', class_='value d-flex align-items-center').text.strip() # type: ignore
+    price = soup.find('span', class_='value d-flex align-items-center').text.strip()[:7] # type: ignore
     # Verificar la disponibilidad del producto
     add_to_cart_button = soup.find('button', class_='add-to-cart btn btn-primary')
     is_available = 'Agregar al carrito' in add_to_cart_button.text  # type: ignore
@@ -567,7 +591,7 @@ def meki(url,soup, data) -> dict:
     data.update({
         'price': price,
         'lab_name': lab_name,
-        "bioequivalent": bioequivalent,
+        'bioequivalent': bioequivalent,
         'is_available': is_available,
         'active_principle': active_principle,
         'web_name': name
@@ -602,7 +626,7 @@ def cruzverde(url, driver, soup, data) -> dict:
         driver.get(url)
 
         # Esperar a que el app-root esté presente
-        app_root = WebDriverWait(driver, 30).until(
+        app_root = WebDriverWait(driver, 15).until(
             EC.presence_of_element_located((By.TAG_NAME, "app-root"))
         )
 
@@ -619,7 +643,7 @@ def cruzverde(url, driver, soup, data) -> dict:
         driver.get(url)
 
         # Esperar a que el nuevo app-root esté presente
-        app_root = WebDriverWait(driver, 30).until(
+        app_root = WebDriverWait(driver, 15).until(
             EC.presence_of_element_located((By.TAG_NAME, "app-root"))
         )
 
@@ -763,6 +787,281 @@ def knoplab(url, soup,data) -> dict:
         'is_available': is_available,
         'sku': sku,
         'web_name': name
+    })
+
+    return data
+
+
+def farmaciajvf(url,data) -> dict:
+    """
+    Scrapes medication data from the Knop Laboratorios website.
+
+    Parameters
+    ----------
+    url : str
+        The URL of the Farmacia JVF product page.
+    driver : WebDriver
+        The Selenium WebDriver instance.
+    soup : BeautifulSoup object
+        The BeautifulSoup object containing the HTML content of the page.
+    data : dict
+        A dictionary to store the scraped data.
+
+    Returns
+    -------
+    dict
+        The updated dictionary with the scraped data.
+    """
+    # Configura Selenium
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")  # Ejecuta el navegador en modo headless
+    chrome_options.add_argument("--incognito")
+
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+    
+    driver.get(url)
+    try:
+        wait = WebDriverWait(driver, 10)
+        button1 = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[@class='ant-btn ant-btn-block button-secondary']/span[text()='En Otro Momento']")))
+        button1.click()
+    except Exception as e: # type: ignore
+        # print(f"No se pudo encontrar el primer botón: {e}")
+        pass
+
+    time.sleep(10)  # Ajusta el tiempo según sea necesario
+    # Espera a que el segundo botón aparezca y haz clic en el botón "Ok"
+    try:
+        button2 = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[@class='ant-btn ant-btn-block button-tertiary']/span[text()='Ok']")))
+        button2.click()
+    except Exception as e: # type: ignore
+        # print(f"No se pudo encontrar el segundo botón: {e}")
+        pass
+
+    # Espera a que la página cargue completamente
+    time.sleep(10)  # Ajusta el tiempo según sea necesario
+
+    # Obtén el contenido de la página
+    page_source = driver.page_source
+
+    # Analiza el HTML con BeautifulSoup
+    soup = BeautifulSoup(page_source, 'html.parser')
+
+    # Extrae el nombre del producto
+    product_name_element = soup.find('h1', class_='ph-product-detail-quote-title-info-main-title')
+    product_name = product_name_element.text.strip() if product_name_element else None
+
+    # Extrae el laboratorio
+    lab_element = soup.find('div', class_='ph-product-detail-quote-title-info-main-subtitle')
+    lab = lab_element.text.strip().replace('Laboratorio:', '').strip() if lab_element else None
+
+    # Extrae el precio
+    price_element = soup.find('div', class_='ph-product-detail-detailpharmacy-info-final-price')
+    price = price_element.text.strip() if price_element else None
+
+    # Extrae el principio activo
+    compound = None
+    compound_elements = soup.find_all('div', class_='ant-row ph-product-detail-quote-description-title-container')
+    for element in compound_elements:
+        title_element = element.find('h3', class_='ph-product-detail-quote-description-title')
+        if title_element and 'Principio activo' in title_element.text:
+            compound_element = element.find('div', class_='ant-col ant-col-xs-16 ant-col-sm-16 ant-col-md-16 ant-col-lg-16 ant-col-xl-16')
+            compound_value_element = compound_element.find('h3', class_='ph-product-detail-quote-description-subtitle') if compound_element else None
+            compound = compound_value_element.text.strip() if compound_value_element else None
+            break
+
+    # Verifica si el producto está en stock
+    add_to_cart_button = driver.find_element(By.XPATH, "//button[@class='ant-btn button-primary']/span[text()='Agregar']")
+    if add_to_cart_button:
+        is_available = True
+    else:
+        is_available = False
+    # try:
+    #     add_to_cart_button = driver.find_element(By.XPATH, "//button[@class='ant-btn button-primary']/span[text()='Agregar']")
+    #     is_available = True
+    # except:
+    #     is_available = False
+    
+
+    div_bioequivalent = soup.find_all('div', class_='ph-product-detail-type-recepit-title')
+    bioequivalent = False
+    for div in div_bioequivalent:
+        if div.text.strip() == 'Producto Bioequivalente':
+            bioequivalent = True
+        else:
+            continue
+
+    # Cierra el navegador
+    driver.quit()
+
+    data.update({
+        'price': price,
+        'lab_name': lab,
+        'bioequivalent': bioequivalent,
+        'is_available': is_available,
+        'active_principle': compound,
+        'web_name': product_name
+    })
+
+    return data
+
+
+def anticonceptivo_cl(url,data) -> dict:
+    """
+    Scrapes medication data from the Anticonceptivo.cl website.
+
+    Parameters
+    ----------
+    url : str
+        The URL of the Anticonceptivo.cl product page.
+    driver : WebDriver
+        The Selenium WebDriver instance.
+    soup : BeautifulSoup object
+        The BeautifulSoup object containing the HTML content of the page.
+    data : dict
+        A dictionary to store the scraped data.
+
+    Returns
+    -------
+    dict
+        The updated dictionary with the scraped data.
+    """
+    # Configura Selenium
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")  # Ejecuta el navegador en modo headless
+    chrome_options.add_argument("--incognito")
+
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+    
+    driver.get(url)
+
+    # Espera a que la página cargue completamente
+    time.sleep(5)  # Ajusta el tiempo según sea necesario
+
+    # Obtén el contenido de la página
+    page_source = driver.page_source
+
+    # Analiza el HTML con BeautifulSoup
+    soup = BeautifulSoup(page_source, 'html.parser')
+
+    # Obtener el precio
+    price_element = soup.find('span', class_='font-poppins font-36 bold color-009BE8')
+    price = price_element.text.strip()[:7].strip('C') if price_element else None
+
+    # Obtener el SKU
+    sku_element = soup.find('span', class_='font-poppins font-16 color-009BE8')
+    sku = sku_element.text.strip().split(':')[1].strip() if sku_element else None
+
+    # Obtener el fabricante
+    manufacturer_element = soup.find('span', class_='font-poppins font-14 medium font-italic color-585858')
+    lab = manufacturer_element.text.strip() if manufacturer_element else None
+
+    # Obtener el nombre del producto
+    product_name_element = soup.find('h1', class_='font-poppins medium font-27 bold text-black')
+    product_name = product_name_element.text.strip() if product_name_element else None
+
+    # Verificar disponibilidad de stock
+    stock_status_element = soup.find('button', class_='btn btn-outline-bicolor btn-add-cart btn-block px-1')
+    is_available = None
+    if stock_status_element:
+        if 'disabled' in stock_status_element.attrs: #type: ignore
+            # data['stock_status'] = 'SIN STOCK ONLINE'
+            is_available = False
+        else:
+            is_available = True
+    else:
+        pass
+
+    # Obtener el compuesto o principio activo
+    compound_element = soup.find('div', class_='font-poppins font-12 compoundProduct')
+    compound = compound_element.text.strip() if compound_element else None
+
+    # Cierra el navegador
+    driver.quit()
+
+    data.update({
+        'price': price,
+        'lab_name': lab,
+        'is_available': is_available,
+        'sku': sku,
+        'active_principle': compound,
+        'web_name': product_name
+    })
+
+    return data
+
+
+def farmaloop(url,data) -> dict:
+    """
+    Scrapes medication data from the Knop Laboratorios website.
+
+    Parameters
+    ----------
+    url : str
+        The URL of the Farmaloops product page.
+    driver : WebDriver
+        The Selenium WebDriver instance.
+    soup : BeautifulSoup object
+        The BeautifulSoup object containing the HTML content of the page.
+    data : dict
+        A dictionary to store the scraped data.
+
+    Returns
+    -------
+    dict
+        The updated dictionary with the scraped data.
+    """
+    # Configura Selenium
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")  # Ejecuta el navegador en modo headless
+    chrome_options.add_argument("--incognito")
+
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+    
+    driver.get(url)
+    # Espera a que la página cargue completamente
+    time.sleep(5)  # Ajusta el tiempo según sea necesario
+
+    # Obtén el contenido de la página
+    page_source = driver.page_source
+
+    # Analiza el HTML con BeautifulSoup
+    soup = BeautifulSoup(page_source, 'html.parser')
+
+    # Encuentra el div con id __next
+    next_div = soup.find('div', id='__next')
+
+    # Extrae el elemento h1 dentro del div
+    h1_element = next_div.find('h1', class_='MuiTypography-root MuiTypography-h1 mui-style-1i0nuda') #type: ignore
+    
+    product_name = h1_element.text.strip() if h1_element else None
+
+    # Verifica si el producto está sin stock
+    stock_status_element = next_div.find('p', class_='MuiTypography-root MuiTypography-body1 mui-style-ryncay') # type: ignore
+    if stock_status_element and 'Producto actualmente sin stock.' in stock_status_element.text:
+        price = None
+    else:
+        # Extrae el precio
+        price_element = next_div.find('p', class_='MuiTypography-root MuiTypography-body1 mui-style-1gx7bde') # type: ignore
+        price = price_element.text.strip() if price_element else None
+
+    # Extrae el laboratorio
+    lab_element = next_div.find('p', class_='MuiTypography-root MuiTypography-body1 mui-style-t9bb1s') # type: ignore
+    lab = lab_element.text.strip() if lab_element else None
+
+    # Extrae el compuesto o principio activo
+    compound_element = next_div.find('p', class_='MuiTypography-root MuiTypography-body1 mui-style-y9lxiw') # type: ignore
+    compound = compound_element.text.strip() if compound_element else None
+
+    is_available = True if price else False
+
+    driver.quit()
+
+    data.update({
+        'price': price,
+        'lab_name': lab,
+        'is_available': is_available,
+        'active_principle': compound,
+        'web_name': product_name
     })
 
     return data
