@@ -205,7 +205,7 @@ def buhochile(url,soup,data) -> dict:
     # Analiza el HTML con BeautifulSoup
     soup = BeautifulSoup(page_source, 'html.parser')
     stock = soup.find('strong')
-    is_available = False if stock2.text.strip() == 'Sin stock disponible' and price == None else True # type: ignore
+    is_available = False if stock.text.strip() == 'Sin stock disponible' and price == None else True # type: ignore
 
     data.update({
         'price': price,
@@ -626,7 +626,7 @@ def cruzverde(url, driver, soup, data) -> dict:
         driver.get(url)
 
         # Esperar a que el app-root esté presente
-        app_root = WebDriverWait(driver, 30).until(
+        app_root = WebDriverWait(driver, 15).until(
             EC.presence_of_element_located((By.TAG_NAME, "app-root"))
         )
 
@@ -643,7 +643,7 @@ def cruzverde(url, driver, soup, data) -> dict:
         driver.get(url)
 
         # Esperar a que el nuevo app-root esté presente
-        app_root = WebDriverWait(driver, 30).until(
+        app_root = WebDriverWait(driver, 15).until(
             EC.presence_of_element_located((By.TAG_NAME, "app-root"))
         )
 
@@ -824,7 +824,7 @@ def farmaciajvf(url,data) -> dict:
         wait = WebDriverWait(driver, 10)
         button1 = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[@class='ant-btn ant-btn-block button-secondary']/span[text()='En Otro Momento']")))
         button1.click()
-    except Exception as e:
+    except Exception as e: # type: ignore
         # print(f"No se pudo encontrar el primer botón: {e}")
         pass
 
@@ -833,7 +833,7 @@ def farmaciajvf(url,data) -> dict:
     try:
         button2 = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[@class='ant-btn ant-btn-block button-tertiary']/span[text()='Ok']")))
         button2.click()
-    except Exception as e:
+    except Exception as e: # type: ignore
         # print(f"No se pudo encontrar el segundo botón: {e}")
         pass
 
@@ -870,11 +870,17 @@ def farmaciajvf(url,data) -> dict:
             break
 
     # Verifica si el producto está en stock
-    try:
-        add_to_cart_button = driver.find_element(By.XPATH, "//button[@class='ant-btn button-primary']/span[text()='Agregar']")
+    add_to_cart_button = driver.find_element(By.XPATH, "//button[@class='ant-btn button-primary']/span[text()='Agregar']")
+    if add_to_cart_button:
         is_available = True
-    except:
+    else:
         is_available = False
+    # try:
+    #     add_to_cart_button = driver.find_element(By.XPATH, "//button[@class='ant-btn button-primary']/span[text()='Agregar']")
+    #     is_available = True
+    # except:
+    #     is_available = False
+    
 
     div_bioequivalent = soup.find_all('div', class_='ph-product-detail-type-recepit-title')
     bioequivalent = False
